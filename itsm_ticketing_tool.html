@@ -1,0 +1,651 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); font-size: 14px; color: var(--color-text-primary); }
+.app { display: flex; height: 100vh; min-height: 600px; background: var(--color-background-tertiary); }
+.sidebar { width: 200px; min-width: 200px; background: var(--color-background-primary); border-right: 0.5px solid var(--color-border-tertiary); display: flex; flex-direction: column; padding: 16px 0; }
+.sidebar-logo { padding: 0 16px 16px; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 8px; }
+.sidebar-logo h1 { font-size: 15px; font-weight: 500; color: var(--color-text-primary); }
+.sidebar-logo p { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+.nav-section { padding: 8px 0; }
+.nav-label { font-size: 10px; font-weight: 500; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; padding: 0 16px 4px; }
+.nav-item { display: flex; align-items: center; gap: 8px; padding: 7px 16px; cursor: pointer; font-size: 13px; color: var(--color-text-secondary); border-left: 2px solid transparent; transition: all 0.1s; }
+.nav-item:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+.nav-item.active { color: #185FA5; border-left-color: #185FA5; background: var(--color-background-info); font-weight: 500; }
+.nav-item .ti { font-size: 15px; }
+.badge { font-size: 10px; padding: 1px 6px; border-radius: 10px; margin-left: auto; background: var(--color-background-danger); color: var(--color-text-danger); font-weight: 500; }
+.role-switcher { margin: auto 16px 0; padding: 10px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); }
+.role-switcher label { font-size: 10px; color: var(--color-text-tertiary); display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+.role-switcher select { width: 100%; font-size: 12px; padding: 4px 6px; border-radius: 4px; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); }
+.main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+.topbar { background: var(--color-background-primary); border-bottom: 0.5px solid var(--color-border-tertiary); padding: 0 20px; height: 48px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 10; }
+.topbar h2 { font-size: 15px; font-weight: 500; flex: 1; }
+.topbar input { font-size: 13px; padding: 6px 10px 6px 32px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-secondary); color: var(--color-text-primary); width: 200px; }
+.search-wrap { position: relative; }
+.search-wrap .ti { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); font-size: 14px; color: var(--color-text-tertiary); }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); font-size: 13px; cursor: pointer; font-family: var(--font-sans); }
+.btn:hover { background: var(--color-background-secondary); }
+.btn-primary { background: #185FA5; border-color: #185FA5; color: #fff; }
+.btn-primary:hover { background: #0C447C; }
+.content { padding: 20px; flex: 1; }
+.page { display: none; }
+.page.active { display: block; }
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.stat-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 14px 16px; }
+.stat-card .label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 6px; }
+.stat-card .value { font-size: 22px; font-weight: 500; }
+.stat-card .sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
+.value.open { color: #185FA5; }
+.value.inprog { color: #854F0B; }
+.value.resolved { color: #3B6D11; }
+.value.breached { color: #A32D2D; }
+.section-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); margin-bottom: 16px; overflow: hidden; }
+.section-header { padding: 12px 16px; border-bottom: 0.5px solid var(--color-border-tertiary); display: flex; align-items: center; justify-content: space-between; }
+.section-header h3 { font-size: 13px; font-weight: 500; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 9px 16px; font-size: 11px; font-weight: 500; color: var(--color-text-tertiary); border-bottom: 0.5px solid var(--color-border-tertiary); text-transform: uppercase; letter-spacing: 0.06em; }
+td { padding: 10px 16px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--color-background-secondary); }
+.ticket-id { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-secondary); }
+.priority-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+.p-critical { background: #FCEBEB; color: #A32D2D; }
+.p-high { background: #FAEEDA; color: #854F0B; }
+.p-medium { background: #E6F1FB; color: #185FA5; }
+.p-low { background: #EAF3DE; color: #3B6D11; }
+.status-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
+.s-open { background: #E6F1FB; color: #185FA5; }
+.s-inprogress { background: #FAEEDA; color: #854F0B; }
+.s-pending { background: #FBEAF0; color: #993556; }
+.s-resolved { background: #EAF3DE; color: #3B6D11; }
+.s-closed { background: var(--color-background-secondary); color: var(--color-text-secondary); }
+.sla-ok { color: #3B6D11; font-size: 12px; }
+.sla-warn { color: #854F0B; font-size: 12px; }
+.sla-breach { color: #A32D2D; font-size: 12px; }
+.avatar { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; flex-shrink: 0; }
+.clickable { cursor: pointer; }
+.clickable:hover td:first-child { color: #185FA5; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group.full { grid-column: 1 / -1; }
+.form-group label { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); }
+.form-group input, .form-group select, .form-group textarea { font-size: 13px; padding: 7px 10px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); font-family: var(--font-sans); }
+.form-group textarea { resize: vertical; min-height: 80px; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #378ADD; }
+.ai-box { background: #E6F1FB; border: 0.5px solid #B5D4F4; border-radius: var(--border-radius-md); padding: 12px 14px; margin-top: 10px; }
+.ai-box .ai-header { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: #185FA5; margin-bottom: 6px; }
+.ai-result { font-size: 13px; color: var(--color-text-primary); }
+.ai-result .row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 12px; }
+.ai-result .row span:first-child { color: var(--color-text-secondary); min-width: 80px; }
+.spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid #B5D4F4; border-top-color: #185FA5; border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 100; display: flex; align-items: center; justify-content: center; }
+.modal { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-secondary); width: 560px; max-height: 88vh; overflow-y: auto; }
+.modal-header { padding: 16px 20px; border-bottom: 0.5px solid var(--color-border-tertiary); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--color-background-primary); }
+.modal-header h3 { font-size: 15px; font-weight: 500; }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 14px 20px; border-top: 0.5px solid var(--color-border-tertiary); display: flex; gap: 8px; justify-content: flex-end; }
+.detail-row { display: flex; gap: 8px; margin-bottom: 8px; font-size: 13px; }
+.detail-row .dk { color: var(--color-text-secondary); min-width: 120px; }
+.timeline { margin-top: 16px; }
+.tl-item { display: flex; gap: 10px; margin-bottom: 12px; }
+.tl-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.tl-content { font-size: 12px; }
+.tl-content strong { font-size: 13px; display: block; }
+.tl-time { color: var(--color-text-tertiary); font-size: 11px; }
+.kb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.kb-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 14px 16px; cursor: pointer; }
+.kb-card:hover { border-color: #378ADD; }
+.kb-card .kb-cat { font-size: 10px; font-weight: 500; color: #185FA5; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+.kb-card h4 { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+.kb-card p { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+.asset-tag { font-family: var(--font-mono); font-size: 11px; background: var(--color-background-secondary); padding: 1px 6px; border-radius: 4px; }
+.chart-bar-wrap { display: flex; flex-direction: column; gap: 8px; }
+.chart-row { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+.chart-label { min-width: 80px; color: var(--color-text-secondary); }
+.chart-bar-bg { flex: 1; background: var(--color-background-secondary); border-radius: 4px; height: 14px; overflow: hidden; }
+.chart-bar-fill { height: 100%; border-radius: 4px; }
+.chart-val { min-width: 28px; text-align: right; color: var(--color-text-secondary); }
+.approval-card { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: flex-start; gap: 12px; }
+.approval-card .info { flex: 1; }
+.approval-card h4 { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.approval-card p { font-size: 12px; color: var(--color-text-secondary); }
+.approval-actions { display: flex; gap: 6px; margin-top: 8px; }
+.btn-approve { background: #EAF3DE; border-color: #C0DD97; color: #3B6D11; font-size: 12px; padding: 4px 10px; }
+.btn-approve:hover { background: #C0DD97; }
+.btn-reject { background: #FCEBEB; border-color: #F7C1C1; color: #A32D2D; font-size: 12px; padding: 4px 10px; }
+.btn-reject:hover { background: #F7C1C1; }
+.empty { text-align: center; padding: 40px 20px; color: var(--color-text-secondary); }
+.empty .ti { font-size: 36px; display: block; margin-bottom: 8px; color: var(--color-text-tertiary); }
+.comment-box { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; margin-bottom: 8px; font-size: 13px; }
+.comment-box .cm-header { font-size: 11px; color: var(--color-text-tertiary); margin-bottom: 4px; }
+.resolution-box { background: #EAF3DE; border: 0.5px solid #C0DD97; border-radius: var(--border-radius-md); padding: 12px 14px; margin-top: 12px; }
+.resolution-box h4 { font-size: 12px; font-weight: 500; color: #3B6D11; margin-bottom: 6px; }
+</style>
+
+<h2 class="sr-only">ITSM Ticketing Tool for IT Operations — manage tickets, assets, SLA, knowledge base, approvals, and analytics</h2>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <h1><i class="ti ti-ticket" aria-hidden="true"></i> ServiceDesk</h1>
+      <p>IT Operations</p>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Main</div>
+      <div class="nav-item active" onclick="navigate('dashboard')"><i class="ti ti-layout-dashboard" aria-hidden="true"></i> Dashboard</div>
+      <div class="nav-item" onclick="navigate('tickets')"><i class="ti ti-ticket" aria-hidden="true"></i> Tickets <span class="badge" id="open-badge">7</span></div>
+      <div class="nav-item" onclick="navigate('sla')"><i class="ti ti-clock" aria-hidden="true"></i> SLA Monitor</div>
+      <div class="nav-item" onclick="navigate('approvals')"><i class="ti ti-checks" aria-hidden="true"></i> Approvals <span class="badge" id="appr-badge">3</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Resources</div>
+      <div class="nav-item" onclick="navigate('assets')"><i class="ti ti-device-laptop" aria-hidden="true"></i> Assets</div>
+      <div class="nav-item" onclick="navigate('kb')"><i class="ti ti-books" aria-hidden="true"></i> Knowledge Base</div>
+      <div class="nav-item" onclick="navigate('analytics')"><i class="ti ti-chart-bar" aria-hidden="true"></i> Analytics</div>
+    </div>
+    <div class="role-switcher">
+      <label>Viewing as</label>
+      <select id="role-select" onchange="switchRole(this.value)">
+        <option value="user">User — Ravi Kumar</option>
+        <option value="tech">Technician — Priya S.</option>
+        <option value="admin">Admin — IT Manager</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <h2 id="page-title">Dashboard</h2>
+      <div class="search-wrap">
+        <i class="ti ti-search" aria-hidden="true"></i>
+        <input type="text" placeholder="Search tickets..." oninput="filterTickets(this.value)">
+      </div>
+      <button class="btn btn-primary" onclick="openNewTicket()"><i class="ti ti-plus" aria-hidden="true"></i> New Ticket</button>
+    </div>
+
+    <div class="content">
+
+      <!-- Dashboard -->
+      <div id="page-dashboard" class="page active">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="label">Open tickets</div><div class="value open" id="stat-open">7</div><div class="sub">+2 today</div></div>
+          <div class="stat-card"><div class="label">In progress</div><div class="value inprog" id="stat-ip">4</div><div class="sub">3 assigned</div></div>
+          <div class="stat-card"><div class="label">Resolved today</div><div class="value resolved" id="stat-res">12</div><div class="sub">Avg 2.4 hrs</div></div>
+          <div class="stat-card"><div class="label">SLA breaches</div><div class="value breached" id="stat-breach">1</div><div class="sub">This week</div></div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header"><h3>Recent tickets</h3><button class="btn" onclick="navigate('tickets')" style="font-size:12px;padding:4px 10px;">View all <i class="ti ti-arrow-right" aria-hidden="true"></i></button></div>
+          <table>
+            <thead><tr><th>ID</th><th>Subject</th><th>Requester</th><th>Priority</th><th>Status</th><th>SLA</th></tr></thead>
+            <tbody id="dash-tbody"></tbody>
+          </table>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="section-card">
+            <div class="section-header"><h3>Tickets by category</h3></div>
+            <div style="padding:16px;" class="chart-bar-wrap" id="cat-chart"></div>
+          </div>
+          <div class="section-card">
+            <div class="section-header"><h3>Pending approvals</h3></div>
+            <div style="padding:12px 16px;" id="dash-approvals"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tickets -->
+      <div id="page-tickets" class="page">
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+          <button class="btn active-filter" onclick="filterStatus('all')" id="fAll">All</button>
+          <button class="btn" onclick="filterStatus('open')" id="fOpen">Open</button>
+          <button class="btn" onclick="filterStatus('inprogress')" id="fIP">In progress</button>
+          <button class="btn" onclick="filterStatus('pending')" id="fPend">Pending</button>
+          <button class="btn" onclick="filterStatus('resolved')" id="fRes">Resolved</button>
+        </div>
+        <div class="section-card">
+          <table>
+            <thead><tr><th>ID</th><th>Subject</th><th>Category</th><th>Requester</th><th>Assignee</th><th>Priority</th><th>Status</th><th>SLA</th><th></th></tr></thead>
+            <tbody id="tickets-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SLA -->
+      <div id="page-sla" class="page">
+        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+          <div class="stat-card"><div class="label">SLA compliance</div><div class="value resolved">94%</div><div class="sub">Last 30 days</div></div>
+          <div class="stat-card"><div class="label">Avg resolution time</div><div class="value inprog">3.2 hrs</div><div class="sub">Critical: 1.1 hrs</div></div>
+          <div class="stat-card"><div class="label">At-risk tickets</div><div class="value breached">3</div><div class="sub">Due within 1 hr</div></div>
+        </div>
+        <div class="section-card">
+          <div class="section-header"><h3>SLA policy matrix</h3></div>
+          <table>
+            <thead><tr><th>Priority</th><th>Response time</th><th>Resolution time</th><th>Escalation</th><th>Compliance</th></tr></thead>
+            <tbody>
+              <tr><td><span class="priority-badge p-critical">Critical</span></td><td>15 min</td><td>2 hrs</td><td>30 min</td><td><span class="sla-ok">✓ 89%</span></td></tr>
+              <tr><td><span class="priority-badge p-high">High</span></td><td>1 hr</td><td>8 hrs</td><td>4 hrs</td><td><span class="sla-ok">✓ 96%</span></td></tr>
+              <tr><td><span class="priority-badge p-medium">Medium</span></td><td>4 hrs</td><td>24 hrs</td><td>12 hrs</td><td><span class="sla-ok">✓ 98%</span></td></tr>
+              <tr><td><span class="priority-badge p-low">Low</span></td><td>8 hrs</td><td>72 hrs</td><td>48 hrs</td><td><span class="sla-ok">✓ 99%</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="section-card">
+          <div class="section-header"><h3>At-risk & breached tickets</h3></div>
+          <table>
+            <thead><tr><th>ID</th><th>Subject</th><th>Priority</th><th>Assignee</th><th>Due in</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td class="ticket-id">TKT-1021</td><td>Server CPU at 98% — prod DB</td><td><span class="priority-badge p-critical">Critical</span></td><td>Priya S.</td><td><span class="sla-breach">BREACHED</span></td><td><span class="status-badge s-inprogress">In progress</span></td></tr>
+              <tr><td class="ticket-id">TKT-1019</td><td>VPN not connecting — remote team</td><td><span class="priority-badge p-high">High</span></td><td>Unassigned</td><td><span class="sla-warn">38 min</span></td><td><span class="status-badge s-open">Open</span></td></tr>
+              <tr><td class="ticket-id">TKT-1015</td><td>Email client crashing on Win 11</td><td><span class="priority-badge p-medium">Medium</span></td><td>Arjun R.</td><td><span class="sla-warn">2 hrs 10 min</span></td><td><span class="status-badge s-inprogress">In progress</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Approvals -->
+      <div id="page-approvals" class="page">
+        <div id="approvals-list"></div>
+      </div>
+
+      <!-- Assets -->
+      <div id="page-assets" class="page">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="label">Total assets</div><div class="value open">142</div></div>
+          <div class="stat-card"><div class="label">In use</div><div class="value resolved">118</div></div>
+          <div class="stat-card"><div class="label">In repair</div><div class="value inprog">9</div></div>
+          <div class="stat-card"><div class="label">Retired</div><div class="value" style="color:var(--color-text-secondary)">15</div></div>
+        </div>
+        <div class="section-card">
+          <div class="section-header"><h3>Asset inventory</h3></div>
+          <table>
+            <thead><tr><th>Asset tag</th><th>Name</th><th>Type</th><th>Assigned to</th><th>Status</th><th>Last updated</th></tr></thead>
+            <tbody>
+              <tr><td><span class="asset-tag">AST-0041</span></td><td>Dell Latitude 7420</td><td>Laptop</td><td>Ravi Kumar</td><td><span class="status-badge s-resolved">In use</span></td><td>Jun 20, 2026</td></tr>
+              <tr><td><span class="asset-tag">AST-0089</span></td><td>HP ProDesk 600</td><td>Desktop</td><td>Unassigned</td><td><span class="status-badge s-open">Available</span></td><td>Jun 15, 2026</td></tr>
+              <tr><td><span class="asset-tag">AST-0112</span></td><td>Cisco 9300 Switch</td><td>Network</td><td>IT Room B</td><td><span class="status-badge s-inprogress">In repair</span></td><td>Jun 22, 2026</td></tr>
+              <tr><td><span class="asset-tag">AST-0055</span></td><td>iPhone 15 Pro</td><td>Mobile</td><td>Priya S.</td><td><span class="status-badge s-resolved">In use</span></td><td>Jun 18, 2026</td></tr>
+              <tr><td><span class="asset-tag">AST-0033</span></td><td>Dell PowerEdge R740</td><td>Server</td><td>Data center</td><td><span class="status-badge s-resolved">In use</span></td><td>Jun 25, 2026</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Knowledge Base -->
+      <div id="page-kb" class="page">
+        <div style="margin-bottom:14px;">
+          <input type="text" placeholder="Search knowledge base..." style="width:100%;font-size:13px;padding:8px 12px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-family:var(--font-sans);">
+        </div>
+        <div class="kb-grid">
+          <div class="kb-card"><div class="kb-cat">Network</div><h4>VPN setup guide for remote users</h4><p>Step-by-step instructions to configure and troubleshoot VPN access on Windows and macOS.</p></div>
+          <div class="kb-card"><div class="kb-cat">Email</div><h4>Fix Outlook sync issues</h4><p>Common causes and resolutions for Outlook not syncing, including calendar and contact problems.</p></div>
+          <div class="kb-card"><div class="kb-cat">Hardware</div><h4>Laptop request & provisioning process</h4><p>How to raise a hardware request, approval workflow, and expected delivery timelines.</p></div>
+          <div class="kb-card"><div class="kb-cat">Access</div><h4>Password reset and account unlock</h4><p>Self-service steps for resetting Active Directory passwords and unlocking accounts.</p></div>
+          <div class="kb-card"><div class="kb-cat">Software</div><h4>Installing approved software via Software Center</h4><p>Instructions for end users to install pre-approved applications without admin rights.</p></div>
+          <div class="kb-card"><div class="kb-cat">Security</div><h4>Responding to a phishing email</h4><p>What to do if you receive a suspicious email — steps to report and contain the threat.</p></div>
+        </div>
+      </div>
+
+      <!-- Analytics -->
+      <div id="page-analytics" class="page">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="label">Tickets this month</div><div class="value open">186</div></div>
+          <div class="stat-card"><div class="label">Avg CSAT score</div><div class="value resolved">4.6 / 5</div></div>
+          <div class="stat-card"><div class="label">First-call resolution</div><div class="value inprog">68%</div></div>
+          <div class="stat-card"><div class="label">Reopen rate</div><div class="value breached">4.2%</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="section-card">
+            <div class="section-header"><h3>Volume by category</h3></div>
+            <div style="padding:16px;" class="chart-bar-wrap">
+              <div class="chart-row"><span class="chart-label">Network</span><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:72%;background:#378ADD;"></div></div><span class="chart-val">54</span></div>
+              <div class="chart-row"><span class="chart-label">Hardware</span><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:58%;background:#BA7517;"></div></div><span class="chart-val">44</span></div>
+              <div class="chart-row"><span class="chart-label">Software</span><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:52%;background:#639922;"></div></div><span class="chart-val">39</span></div>
+              <div class="chart-row"><span class="chart-label">Access</span><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:38%;background:#7F77DD;"></div></div><span class="chart-val">29</span></div>
+              <div class="chart-row"><span class="chart-label">Email</span><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:27%;background:#D4537E;"></div></div><span class="chart-val">20</span></div>
+            </div>
+          </div>
+          <div class="section-card">
+            <div class="section-header"><h3>Resolution time by priority</h3></div>
+            <div style="padding:16px;" class="chart-bar-wrap">
+              <div class="chart-row"><span class="chart-label">Critical</span><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:55%;background:#E24B4A;"></div></div><span class="chart-val">1.1h</span></div>
+              <div class="chart-row"><span class="chart-label">High</span><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:65%;background:#EF9F27;"></div></div><span class="chart-val">3.9h</span></div>
+              <div class="chart-row"><span class="chart-label">Medium</span><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:75%;background:#378ADD;"></div></div><span class="chart-val">9.2h</span></div>
+              <div class="chart-row"><span class="chart-label">Low</span><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:90%;background:#639922;"></div></div><span class="chart-val">22h</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="section-card" style="margin-top:16px;">
+          <div class="section-header"><h3>Top technicians — June 2026</h3></div>
+          <table>
+            <thead><tr><th>Technician</th><th>Resolved</th><th>Avg time</th><th>CSAT</th><th>SLA met</th></tr></thead>
+            <tbody>
+              <tr><td><span style="display:flex;align-items:center;gap:8px;"><span class="avatar" style="background:#E6F1FB;color:#185FA5;">PS</span>Priya S.</span></td><td>42</td><td>1.8 hrs</td><td>4.9</td><td><span class="sla-ok">98%</span></td></tr>
+              <tr><td><span style="display:flex;align-items:center;gap:8px;"><span class="avatar" style="background:#EAF3DE;color:#3B6D11;">AR</span>Arjun R.</span></td><td>38</td><td>2.6 hrs</td><td>4.7</td><td><span class="sla-ok">95%</span></td></tr>
+              <tr><td><span style="display:flex;align-items:center;gap:8px;"><span class="avatar" style="background:#FAEEDA;color:#854F0B;">MM</span>Meera M.</span></td><td>29</td><td>3.1 hrs</td><td>4.5</td><td><span class="sla-warn">91%</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- New ticket modal -->
+<div id="new-ticket-modal" class="modal-overlay" style="display:none;">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Raise a new ticket</h3>
+      <button class="btn" onclick="closeModal('new-ticket-modal')" style="padding:4px 8px;"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full"><label>Subject *</label><input type="text" id="tk-subject" placeholder="Brief description of the issue" oninput="scheduleAI()"></div>
+        <div class="form-group full"><label>Description *</label><textarea id="tk-desc" placeholder="Provide full details of the issue..." oninput="scheduleAI()"></textarea></div>
+        <div class="form-group"><label>Category</label>
+          <select id="tk-cat">
+            <option>Network</option><option>Hardware</option><option>Software</option><option>Email</option><option>Access / Permissions</option><option>Security</option><option>Other</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Affected asset (optional)</label>
+          <select id="tk-asset"><option value="">-- None --</option><option>AST-0041 — Dell Latitude 7420</option><option>AST-0089 — HP ProDesk 600</option><option>AST-0112 — Cisco 9300 Switch</option><option>AST-0055 — iPhone 15 Pro</option></select>
+        </div>
+      </div>
+
+      <div class="ai-box" id="ai-box" style="display:none;">
+        <div class="ai-header"><i class="ti ti-sparkles" aria-hidden="true"></i> AI classification</div>
+        <div class="ai-result" id="ai-result"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('new-ticket-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitTicket()"><i class="ti ti-send" aria-hidden="true"></i> Submit ticket</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ticket detail modal -->
+<div id="detail-modal" class="modal-overlay" style="display:none;">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="detail-title">Ticket detail</h3>
+      <button class="btn" onclick="closeModal('detail-modal')" style="padding:4px 8px;"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body" id="detail-body"></div>
+    <div class="modal-footer" id="detail-footer"></div>
+  </div>
+</div>
+
+<script>
+const TICKETS = [
+  { id:'TKT-1021', subject:'Server CPU at 98% — prod DB', category:'Network', requester:'Priya S.', assignee:'Priya S.', priority:'critical', status:'inprogress', sla:'breach', created:'Jun 25, 09:10', comments:['Checked monitoring dashboard — disk I/O also elevated.','Notified DBA team.'] },
+  { id:'TKT-1020', subject:'Cannot access SharePoint after password reset', category:'Access / Permissions', requester:'Ravi Kumar', assignee:'Arjun R.', priority:'high', status:'inprogress', sla:'warn', created:'Jun 25, 11:30', comments:['Token cache cleared, issue persists.'] },
+  { id:'TKT-1019', subject:'VPN not connecting — remote team', category:'Network', requester:'Ananya G.', assignee:'Unassigned', priority:'high', status:'open', sla:'warn', created:'Jun 25, 13:00', comments:[] },
+  { id:'TKT-1018', subject:'Laptop screen flickering — Finance dept', category:'Hardware', requester:'Suresh B.', assignee:'Meera M.', priority:'medium', status:'pending', sla:'ok', created:'Jun 24, 14:20', comments:['Replacement display unit ordered.'] },
+  { id:'TKT-1017', subject:'Outlook calendar not syncing', category:'Email', requester:'Kavya T.', assignee:'Arjun R.', priority:'low', status:'resolved', sla:'ok', created:'Jun 24, 10:00', comments:['OST file rebuilt, sync restored.'] },
+  { id:'TKT-1016', subject:'Request: Adobe Acrobat Pro license', category:'Software', requester:'Mohan D.', assignee:'IT Manager', priority:'low', status:'pending', sla:'ok', created:'Jun 23, 16:00', comments:[] },
+  { id:'TKT-1015', subject:'Email client crashing on Win 11', category:'Email', requester:'Ritu P.', assignee:'Arjun R.', priority:'medium', status:'inprogress', sla:'warn', created:'Jun 23, 09:00', comments:['Updated to latest patch, monitoring.'] },
+];
+
+const APPROVALS = [
+  { id:'APR-012', title:'Adobe Acrobat Pro license — Mohan D.', desc:'Annual license, ₹8,500/yr. Requested for contract documentation work.', type:'Software', urgency:'Low' },
+  { id:'APR-011', title:'New laptop provisioning — Arun V.', desc:'Dell Latitude 7440, estimated cost ₹72,000. New hire joining Jul 1.', type:'Hardware', urgency:'High' },
+  { id:'APR-010', title:'Firewall rule change — DMZ to internal', desc:'Engineering team needs port 8443 opened for staging environment access.', type:'Network', urgency:'Medium' },
+];
+
+let currentRole = 'user';
+let currentFilter = 'all';
+let searchQuery = '';
+let aiTimer = null;
+
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const titles = { dashboard:'Dashboard', tickets:'Tickets', sla:'SLA Monitor', approvals:'Approvals', assets:'Assets', kb:'Knowledge Base', analytics:'Analytics' };
+  document.getElementById('page-title').textContent = titles[page] || page;
+  event && event.currentTarget && event.currentTarget.classList.add('active');
+  if (page === 'tickets') renderTickets();
+  if (page === 'approvals') renderApprovals();
+  if (page === 'dashboard') renderDashboard();
+}
+
+function renderDashboard() {
+  const open = TICKETS.filter(t => t.status === 'open').length;
+  const ip = TICKETS.filter(t => t.status === 'inprogress').length;
+  document.getElementById('stat-open').textContent = open;
+  document.getElementById('stat-ip').textContent = ip;
+  document.getElementById('open-badge').textContent = open;
+
+  const recent = TICKETS.slice(0, 5);
+  const tbody = document.getElementById('dash-tbody');
+  tbody.innerHTML = recent.map(t => `<tr class="clickable" onclick="openDetail('${t.id}')">
+    <td class="ticket-id">${t.id}</td>
+    <td>${t.subject}</td>
+    <td>${t.requester}</td>
+    <td>${priorityBadge(t.priority)}</td>
+    <td>${statusBadge(t.status)}</td>
+    <td>${slaBadge(t.sla)}</td>
+  </tr>`).join('');
+
+  const cats = {};
+  TICKETS.forEach(t => { cats[t.category] = (cats[t.category]||0)+1; });
+  const max = Math.max(...Object.values(cats));
+  const colors = ['#378ADD','#BA7517','#639922','#7F77DD','#D4537E','#E24B4A'];
+  document.getElementById('cat-chart').innerHTML = Object.entries(cats).map(([cat,n],i) =>
+    `<div class="chart-row"><span class="chart-label" style="min-width:110px;font-size:11px;">${cat}</span><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${Math.round(n/max*100)}%;background:${colors[i%colors.length]};"></div></div><span class="chart-val">${n}</span></div>`
+  ).join('');
+
+  const pending = APPROVALS.slice(0,2);
+  document.getElementById('dash-approvals').innerHTML = pending.map(a =>
+    `<div style="margin-bottom:10px;padding-bottom:10px;border-bottom:0.5px solid var(--color-border-tertiary);">
+      <div style="font-size:13px;font-weight:500;margin-bottom:2px;">${a.title}</div>
+      <div style="font-size:12px;color:var(--color-text-secondary);">${a.type} · ${a.urgency} urgency</div>
+      <div class="approval-actions"><button class="btn btn-approve" onclick="approveItem('${a.id}')">Approve</button><button class="btn btn-reject" onclick="rejectItem('${a.id}')">Reject</button></div>
+    </div>`
+  ).join('') + (APPROVALS.length > 2 ? `<div style="font-size:12px;color:var(--color-text-secondary);">+${APPROVALS.length-2} more <a href="#" onclick="navigate('approvals')" style="color:#185FA5;">View all</a></div>` : '');
+}
+
+function priorityBadge(p) {
+  const map = { critical:'p-critical', high:'p-high', medium:'p-medium', low:'p-low' };
+  return `<span class="priority-badge ${map[p]||'p-low'}">${p.charAt(0).toUpperCase()+p.slice(1)}</span>`;
+}
+function statusBadge(s) {
+  const map = { open:'s-open', inprogress:'s-inprogress', pending:'s-pending', resolved:'s-resolved', closed:'s-closed' };
+  const labels = { open:'Open', inprogress:'In progress', pending:'Pending', resolved:'Resolved', closed:'Closed' };
+  return `<span class="status-badge ${map[s]||'s-open'}">${labels[s]||s}</span>`;
+}
+function slaBadge(s) {
+  if (s==='breach') return `<span class="sla-breach"><i class="ti ti-alert-circle" aria-hidden="true"></i> Breached</span>`;
+  if (s==='warn') return `<span class="sla-warn"><i class="ti ti-clock" aria-hidden="true"></i> At risk</span>`;
+  return `<span class="sla-ok"><i class="ti ti-check" aria-hidden="true"></i> On track</span>`;
+}
+
+function renderTickets() {
+  let list = TICKETS.filter(t => {
+    if (currentFilter !== 'all' && t.status !== currentFilter) return false;
+    if (searchQuery && !t.subject.toLowerCase().includes(searchQuery) && !t.id.toLowerCase().includes(searchQuery)) return false;
+    if (currentRole === 'user') return t.requester === 'Ravi Kumar';
+    return true;
+  });
+  document.getElementById('tickets-tbody').innerHTML = list.length ? list.map(t =>
+    `<tr class="clickable" onclick="openDetail('${t.id}')">
+      <td class="ticket-id">${t.id}</td><td>${t.subject}</td><td>${t.category}</td>
+      <td>${t.requester}</td><td>${t.assignee}</td>
+      <td>${priorityBadge(t.priority)}</td><td>${statusBadge(t.status)}</td>
+      <td>${slaBadge(t.sla)}</td>
+      <td><button class="btn" onclick="event.stopPropagation();openDetail('${t.id}')" style="font-size:11px;padding:3px 8px;">View</button></td>
+    </tr>`).join('') :
+    `<tr><td colspan="9"><div class="empty"><i class="ti ti-ticket" aria-hidden="true"></i><p>No tickets match this filter.</p></div></td></tr>`;
+}
+
+function filterStatus(s) {
+  currentFilter = s;
+  ['all','open','inprogress','pending','resolved'].forEach(f => {
+    const el = document.getElementById('f'+f.charAt(0).toUpperCase()+f.slice(1));
+    if (el) el.style.background = f===s ? 'var(--color-background-info)' : '';
+  });
+  renderTickets();
+}
+function filterTickets(q) { searchQuery = q.toLowerCase(); renderTickets(); }
+
+function openDetail(id) {
+  const t = TICKETS.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('detail-title').textContent = t.id + ' — ' + t.subject;
+  const isTech = currentRole === 'tech' || currentRole === 'admin';
+  document.getElementById('detail-body').innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+      ${priorityBadge(t.priority)} ${statusBadge(t.status)} ${slaBadge(t.sla)}
+    </div>
+    <div class="detail-row"><span class="dk">Category</span><span>${t.category}</span></div>
+    <div class="detail-row"><span class="dk">Requester</span><span>${t.requester}</span></div>
+    <div class="detail-row"><span class="dk">Assignee</span><span>${t.assignee}</span></div>
+    <div class="detail-row"><span class="dk">Created</span><span>${t.created}</span></div>
+    <hr style="border:none;border-top:0.5px solid var(--color-border-tertiary);margin:12px 0;">
+    <div class="timeline">
+      <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:8px;">Activity</div>
+      <div class="tl-item"><div class="tl-dot" style="background:#378ADD;"></div><div class="tl-content"><strong>Ticket raised</strong><div class="tl-time">${t.created}</div></div></div>
+      ${t.comments.map(c => `<div class="tl-item"><div class="tl-dot" style="background:#639922;"></div><div class="tl-content"><strong>${c}</strong><div class="tl-time">Jun 25, 2026</div></div></div>`).join('')}
+      ${t.status==='resolved'?`<div class="resolution-box"><h4><i class="ti ti-check" aria-hidden="true"></i> Resolved</h4><p style="font-size:13px;color:var(--color-text-primary);">Issue confirmed resolved by requester. Ticket closed.</p></div>`:''}
+    </div>
+    ${isTech && t.status!=='resolved' ? `
+    <hr style="border:none;border-top:0.5px solid var(--color-border-tertiary);margin:14px 0;">
+    <div class="form-group"><label>Add note / update</label><textarea id="tech-note" placeholder="Enter update or resolution note..."></textarea></div>` : ''}
+  `;
+
+  const footer = document.getElementById('detail-footer');
+  if (isTech && t.status !== 'resolved') {
+    footer.innerHTML = `
+      <button class="btn" onclick="updateStatus('${t.id}','inprogress')">Mark in progress</button>
+      <button class="btn btn-approve" onclick="updateStatus('${t.id}','resolved')"><i class="ti ti-check" aria-hidden="true"></i> Resolve ticket</button>
+      <button class="btn" onclick="closeModal('detail-modal')">Close</button>`;
+  } else {
+    footer.innerHTML = `<button class="btn" onclick="closeModal('detail-modal')">Close</button>`;
+  }
+  document.getElementById('detail-modal').style.display = 'flex';
+}
+
+function updateStatus(id, newStatus) {
+  const t = TICKETS.find(x => x.id === id);
+  if (!t) return;
+  const note = document.getElementById('tech-note') ? document.getElementById('tech-note').value : '';
+  if (note) t.comments.push(note);
+  t.status = newStatus;
+  if (newStatus === 'resolved') t.sla = 'ok';
+  closeModal('detail-modal');
+  renderTickets();
+  renderDashboard();
+}
+
+function renderApprovals() {
+  const list = document.getElementById('approvals-list');
+  if (!APPROVALS.length) {
+    list.innerHTML = `<div class="empty"><i class="ti ti-checks" aria-hidden="true"></i><p>No pending approvals.</p></div>`;
+    return;
+  }
+  list.innerHTML = APPROVALS.map(a => `
+    <div class="approval-card" id="apr-${a.id}">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--color-background-info);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="ti ti-${a.type==='Hardware'?'device-laptop':a.type==='Software'?'apps':a.type==='Network'?'network':'file'}" style="font-size:18px;color:#185FA5;" aria-hidden="true"></i></div>
+      <div class="info">
+        <h4>${a.title}</h4>
+        <p>${a.desc}</p>
+        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+          <span class="priority-badge p-medium">${a.type}</span>
+          <span class="priority-badge ${a.urgency==='High'?'p-high':a.urgency==='Medium'?'p-medium':'p-low'}">${a.urgency} urgency</span>
+        </div>
+        <div class="approval-actions">
+          <button class="btn btn-approve" onclick="approveItem('${a.id}')"><i class="ti ti-check" aria-hidden="true"></i> Approve</button>
+          <button class="btn btn-reject" onclick="rejectItem('${a.id}')"><i class="ti ti-x" aria-hidden="true"></i> Reject</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function approveItem(id) {
+  const idx = APPROVALS.findIndex(a => a.id === id);
+  if (idx > -1) APPROVALS.splice(idx, 1);
+  document.getElementById('appr-badge').textContent = APPROVALS.length;
+  renderApprovals();
+  renderDashboard();
+}
+function rejectItem(id) { approveItem(id); }
+
+function openNewTicket() { document.getElementById('new-ticket-modal').style.display = 'flex'; }
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+function scheduleAI() {
+  clearTimeout(aiTimer);
+  const subj = document.getElementById('tk-subject').value.trim();
+  const desc = document.getElementById('tk-desc').value.trim();
+  if (subj.length < 8 && desc.length < 10) { document.getElementById('ai-box').style.display = 'none'; return; }
+  document.getElementById('ai-box').style.display = 'block';
+  document.getElementById('ai-result').innerHTML = '<span class="spinner"></span> Classifying with AI...';
+  aiTimer = setTimeout(() => runAI(subj, desc), 900);
+}
+
+async function runAI(subject, desc) {
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: `You are an ITSM ticket classifier for an IT operations team. Given a ticket subject and description, respond ONLY with a JSON object (no markdown, no preamble) with these fields:
+- priority: one of "critical", "high", "medium", "low"
+- category: one of "Network", "Hardware", "Software", "Email", "Access / Permissions", "Security", "Other"
+- suggestion: a 1-sentence suggested first action for the technician
+- kb_article: title of a relevant knowledge base article if applicable, or null`,
+        messages: [{ role: 'user', content: `Subject: ${subject}\nDescription: ${desc}` }]
+      })
+    });
+    const data = await response.json();
+    const raw = data.content.map(c => c.text || '').join('');
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const result = JSON.parse(clean);
+    document.getElementById('tk-cat').value = result.category || 'Other';
+    document.getElementById('ai-result').innerHTML = `
+      <div class="row"><span>Priority</span>${priorityBadge(result.priority||'medium')}</div>
+      <div class="row"><span>Category</span><span>${result.category}</span></div>
+      <div class="row" style="align-items:flex-start;"><span>Suggestion</span><span style="flex:1;">${result.suggestion}</span></div>
+      ${result.kb_article ? `<div class="row"><span>Related KB</span><span style="color:#185FA5;"><i class="ti ti-book" aria-hidden="true"></i> ${result.kb_article}</span></div>` : ''}`;
+  } catch(e) {
+    document.getElementById('ai-result').innerHTML = '<span style="color:var(--color-text-secondary);font-size:12px;">Could not classify — please set priority manually.</span>';
+  }
+}
+
+function submitTicket() {
+  const subj = document.getElementById('tk-subject').value.trim();
+  if (!subj) { alert('Please enter a subject.'); return; }
+  const newTicket = {
+    id: 'TKT-' + (1022 + TICKETS.length),
+    subject: subj,
+    category: document.getElementById('tk-cat').value,
+    requester: 'Ravi Kumar',
+    assignee: 'Unassigned',
+    priority: 'medium',
+    status: 'open',
+    sla: 'ok',
+    created: 'Jun 26, ' + new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}),
+    comments: []
+  };
+  TICKETS.unshift(newTicket);
+  document.getElementById('tk-subject').value = '';
+  document.getElementById('tk-desc').value = '';
+  document.getElementById('ai-box').style.display = 'none';
+  closeModal('new-ticket-modal');
+  document.getElementById('open-badge').textContent = TICKETS.filter(t=>t.status==='open').length;
+  renderDashboard();
+  navigate('tickets');
+}
+
+function switchRole(r) {
+  currentRole = r;
+  renderTickets();
+}
+
+renderDashboard();
+</script>
