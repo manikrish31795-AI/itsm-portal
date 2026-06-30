@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ServiceDesk — IT Operations</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 /* ── DESIGN TOKENS ─────────────────────────────────────────────────────────── */
 /* Palette: deep navy infrastructure + slate neutrals + single cyan accent.
@@ -330,6 +331,7 @@ tbody tr.rc:hover td{background:var(--raised);}
     <input class="lf-input" type="password" id="l-pass" placeholder="Enter your password" autocomplete="current-password">
     <div class="lf-err" id="l-err"><i class="ti ti-alert-circle"></i> Invalid username or password.</div>
     <button class="lf-btn" onclick="doLogin()">Sign in</button>
+    <div id="l-status" style="font-size:11px;color:var(--tx3);text-align:center;margin-top:10px;display:none;">Connecting to database...</div>
   </div>
 </div>
 
@@ -598,42 +600,86 @@ tbody tr.rc:hover td{background:var(--raised);}
 <div id="toast"></div>
 
 <script>
-// ── DATA ──────────────────────────────────────────────────────────────────────
-let USERS = [
-  {id:1,empId:'EMP-0001',name:'Ravi Kumar',   username:'ravi.kumar', password:'user123',  role:'user',  dept:'Finance',  active:true},
-  {id:2,empId:'EMP-0002',name:'Priya S.',     username:'priya.s',    password:'tech123',  role:'tech',  dept:'IT Ops',   active:true},
-  {id:3,empId:'EMP-0003',name:'Admin',        username:'admin',      password:'admin123', role:'admin', dept:'IT',       active:true},
-  {id:4,empId:'EMP-0004',name:'Arjun R.',     username:'arjun.r',    password:'tech123',  role:'tech',  dept:'IT Ops',   active:true},
-  {id:5,empId:'EMP-0005',name:'Ananya G.',    username:'ananya.g',   password:'user123',  role:'user',  dept:'HR',       active:true},
-  {id:6,empId:'EMP-0006',name:'Meera M.',     username:'meera.m',    password:'tech123',  role:'tech',  dept:'IT Ops',   active:true},
-];
-let nextUserId=7; let nextEmpNum=7;
+// ── SUPABASE CONNECTION ───────────────────────────────────────────────────────
+const SUPABASE_URL = 'https://gnopxmohvfzlnefakzar.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdub3B4bW9odmZ6bG5lZmFremFyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3Njk4NTQsImV4cCI6MjA5ODM0NTg1NH0.jOom3T1A_DZUB-lx0pzYsilDg5gJaRlfRLoYgWzjML4';
+const dbc = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let ASSETS = [
-  {id:1,tag:'AST-0041',name:'Dell Latitude 7420', type:'Laptop',  assignedTo:'Ravi Kumar', assignedEmpId:'EMP-0001',status:'inuse',   serial:'DL7420-001',updated:'Jun 20, 2026'},
-  {id:2,tag:'AST-0089',name:'HP ProDesk 600',     type:'Desktop', assignedTo:'—',          assignedEmpId:'',        status:'available',serial:'HP600-089',  updated:'Jun 15, 2026'},
-  {id:3,tag:'AST-0112',name:'Cisco 9300 Switch',  type:'Network', assignedTo:'IT Room B',  assignedEmpId:'',        status:'repair',   serial:'CSC9300-112',updated:'Jun 22, 2026'},
-  {id:4,tag:'AST-0055',name:'iPhone 15 Pro',      type:'Mobile',  assignedTo:'Priya S.',   assignedEmpId:'EMP-0002',status:'inuse',    serial:'IP15P-055',  updated:'Jun 18, 2026'},
-  {id:5,tag:'AST-0033',name:'Dell PowerEdge R740',type:'Server',  assignedTo:'Data centre',assignedEmpId:'',        status:'inuse',    serial:'DPE740-033', updated:'Jun 25, 2026'},
-];
-let nextAssetId=6;
+// ── DATA (loaded from Supabase at startup) ────────────────────────────────────
+let USERS = [];
+let ASSETS = [];
+let TICKETS = [];
+let APPROVALS = [];
+let nextUserId=1, nextEmpNum=1, nextAssetId=1, nextTktNum=1022;
 
-let TICKETS=[
-  {id:'TKT-1021',subject:'Server CPU at 98% — prod DB',category:'Network',requester:'Ravi Kumar',requesterEmpId:'EMP-0001',assetTag:'AST-0041',assetName:'Dell Latitude 7420',assignee:'Priya S.',priority:'critical',status:'inprogress',sla:'breach',created:'Jun 25, 09:10',comments:[{by:'Priya S.',time:'Jun 25, 09:40',text:'Disk I/O also elevated. Notified DBA team.'}],resolution:''},
-  {id:'TKT-1020',subject:'Cannot access SharePoint after password reset',category:'Access / Permissions',requester:'Ravi Kumar',requesterEmpId:'EMP-0001',assetTag:'AST-0041',assetName:'Dell Latitude 7420',assignee:'Arjun R.',priority:'high',status:'inprogress',sla:'warn',created:'Jun 25, 11:30',comments:[{by:'Arjun R.',time:'Jun 25, 12:00',text:'Token cache cleared, issue persists.'}],resolution:''},
-  {id:'TKT-1019',subject:'VPN not connecting — remote team',category:'Network',requester:'Ananya G.',requesterEmpId:'EMP-0005',assetTag:'N/A',assetName:'N/A',assignee:'Unassigned',priority:'high',status:'open',sla:'warn',created:'Jun 25, 13:00',comments:[],resolution:''},
-  {id:'TKT-1018',subject:'Laptop screen flickering — Finance dept',category:'Hardware',requester:'Ananya G.',requesterEmpId:'EMP-0005',assetTag:'N/A',assetName:'N/A',assignee:'Meera M.',priority:'medium',status:'pending',sla:'ok',created:'Jun 24, 14:20',comments:[{by:'Meera M.',time:'Jun 24, 15:00',text:'Replacement unit ordered.'}],resolution:''},
-  {id:'TKT-1017',subject:'Outlook calendar not syncing',category:'Email',requester:'Ravi Kumar',requesterEmpId:'EMP-0001',assetTag:'AST-0041',assetName:'Dell Latitude 7420',assignee:'Arjun R.',priority:'low',status:'resolved',sla:'ok',created:'Jun 24, 10:00',comments:[{by:'Arjun R.',time:'Jun 24, 11:30',text:'OST rebuilt, sync restored.'}],resolution:'OST file was corrupted. Rebuilt profile and confirmed sync working.'},
-  {id:'TKT-1016',subject:'Request: Adobe Acrobat Pro license',category:'Software',requester:'Ananya G.',requesterEmpId:'EMP-0005',assetTag:'N/A',assetName:'N/A',assignee:'Unassigned',priority:'low',status:'pending',sla:'ok',created:'Jun 23, 16:00',comments:[],resolution:''},
-  {id:'TKT-1015',subject:'Email client crashing on Win 11',category:'Email',requester:'Ravi Kumar',requesterEmpId:'EMP-0001',assetTag:'AST-0041',assetName:'Dell Latitude 7420',assignee:'Arjun R.',priority:'medium',status:'inprogress',sla:'warn',created:'Jun 23, 09:00',comments:[{by:'Arjun R.',time:'Jun 23, 10:00',text:'Updated patch, monitoring.'}],resolution:''},
-];
-let nextTktNum=1022;
+async function loadAllData(){
+  const [{data:u,error:eu},{data:a,error:ea},{data:t,error:et},{data:c,error:ec},{data:ap,error:eap}] =
+    await Promise.all([
+      dbc.from('users').select('*').order('id'),
+      dbc.from('assets').select('*').order('id'),
+      dbc.from('tickets').select('*').order('id',{ascending:false}),
+      dbc.from('comments').select('*').order('id'),
+      dbc.from('approvals').select('*'),
+    ]);
+  if(eu||ea||et||ec||eap){
+    console.error('Supabase load error',eu,ea,et,ec,eap);
+    toast('Database connection error — check console.');
+    return false;
+  }
+  USERS = u.map(x=>({id:x.id,empId:x.emp_id,name:x.name,username:x.username,password:x.password,role:x.role,dept:x.dept,active:x.active}));
+  nextUserId = USERS.length ? Math.max(...USERS.map(x=>x.id))+1 : 1;
+  nextEmpNum = USERS.length ? Math.max(...USERS.map(x=>parseInt((x.empId||'EMP-0000').split('-')[1]||0)))+1 : 1;
 
-let APPROVALS=[
-  {id:'APR-012',title:'Adobe Acrobat Pro license — Ananya G.',desc:'Annual license ₹8,500/yr for contract documentation work.',type:'Software',urgency:'low'},
-  {id:'APR-011',title:'New laptop provisioning — Arun V.',desc:'Dell Latitude 7440, ₹72,000. New hire joining Jul 1.',type:'Hardware',urgency:'high'},
-  {id:'APR-010',title:'Firewall rule change — DMZ to internal',desc:'Engineering needs port 8443 opened for staging environment.',type:'Network',urgency:'medium'},
-];
+  ASSETS = a.map(x=>({id:x.id,tag:x.tag,name:x.name,type:x.type,assignedTo:x.assigned_to,assignedEmpId:x.assigned_emp_id,status:x.status,serial:x.serial,updated:x.updated}));
+  nextAssetId = ASSETS.length ? Math.max(...ASSETS.map(x=>x.id))+1 : 1;
+
+  TICKETS = t.map(x=>({
+    id:x.id,subject:x.subject,category:x.category,requester:x.requester,requesterEmpId:x.requester_emp_id,
+    assetTag:x.asset_tag,assetName:x.asset_name,assignee:x.assignee,priority:x.priority,status:x.status,
+    sla:x.sla,created:x.created,resolution:x.resolution||'',
+    comments:c.filter(cm=>cm.ticket_id===x.id).map(cm=>({by:cm.by_user,time:cm.time,text:cm.text}))
+  }));
+  const nums = TICKETS.map(x=>parseInt((x.id||'TKT-0').split('-')[1]||0));
+  nextTktNum = nums.length ? Math.max(...nums)+1 : 1022;
+
+  APPROVALS = ap.map(x=>({id:x.id,title:x.title,desc:x.description,type:x.type,urgency:x.urgency}));
+  return true;
+}
+
+// ── DB write helpers ──────────────────────────────────────────────────────────
+async function dbInsertUser(u){
+  const {error}=await dbc.from('users').insert([{emp_id:u.empId,name:u.name,username:u.username,password:u.password,role:u.role,dept:u.dept,active:u.active}]);
+  if(error)console.error('dbInsertUser',error);
+}
+async function dbUpdateUser(u){
+  const {error}=await dbc.from('users').update({name:u.name,username:u.username,password:u.password,role:u.role,dept:u.dept,active:u.active}).eq('id',u.id);
+  if(error)console.error('dbUpdateUser',error);
+}
+async function dbInsertAsset(a){
+  const {data,error}=await dbc.from('assets').insert([{tag:a.tag,name:a.name,type:a.type,assigned_to:a.assignedTo,assigned_emp_id:a.assignedEmpId,status:a.status,serial:a.serial,updated:a.updated}]).select();
+  if(error){console.error('dbInsertAsset',error);return null;}
+  return data && data[0] ? data[0].id : null;
+}
+async function dbUpdateAsset(a){
+  const {error}=await dbc.from('assets').update({tag:a.tag,name:a.name,type:a.type,assigned_to:a.assignedTo,assigned_emp_id:a.assignedEmpId,status:a.status,serial:a.serial,updated:a.updated}).eq('id',a.id);
+  if(error)console.error('dbUpdateAsset',error);
+}
+async function dbInsertTicket(t){
+  const {error}=await dbc.from('tickets').insert([{id:t.id,subject:t.subject,category:t.category,requester:t.requester,requester_emp_id:t.requesterEmpId,asset_tag:t.assetTag,asset_name:t.assetName,assignee:t.assignee,priority:t.priority,status:t.status,sla:t.sla,created:t.created,resolution:t.resolution}]);
+  if(error)console.error('dbInsertTicket',error);
+}
+async function dbUpdateTicket(t){
+  const {error}=await dbc.from('tickets').update({assignee:t.assignee,priority:t.priority,status:t.status,sla:t.sla,resolution:t.resolution}).eq('id',t.id);
+  if(error)console.error('dbUpdateTicket',error);
+}
+async function dbInsertComment(ticketId,c){
+  const {error}=await dbc.from('comments').insert([{ticket_id:ticketId,by_user:c.by,time:c.time,text:c.text}]);
+  if(error)console.error('dbInsertComment',error);
+}
+async function dbDeleteApproval(id){
+  const {error}=await dbc.from('approvals').delete().eq('id',id);
+  if(error)console.error('dbDeleteApproval',error);
+}
 
 const KB=[
   {cat:'Network',title:'VPN setup guide for remote users',body:'Step-by-step instructions to configure and troubleshoot VPN access on Windows and macOS.'},
@@ -654,10 +700,26 @@ let editUserId=null;
 let editAssetId=null;
 
 // ── LOGIN ─────────────────────────────────────────────────────────────────────
-function doLogin(){
+let dataLoaded = false;
+async function doLogin(){
   const u=document.getElementById('l-user').value.trim().toLowerCase();
   const p=document.getElementById('l-pass').value;
+  const btn=document.querySelector('.lf-btn');
+  const originalText=btn.textContent;
+  btn.textContent='Connecting...';
+  btn.disabled=true;
+
+  if(!dataLoaded){
+    document.getElementById('l-status').style.display='block';
+    const ok=await loadAllData();
+    document.getElementById('l-status').style.display='none';
+    if(!ok){btn.textContent=originalText;btn.disabled=false;return;}
+    dataLoaded=true;
+  }
+
   const found=USERS.find(x=>x.username.toLowerCase()===u&&x.password===p&&x.active);
+  btn.textContent=originalText;
+  btn.disabled=false;
   if(!found){document.getElementById('l-err').style.display='block';return;}
   document.getElementById('l-err').style.display='none';
   CU=found;
@@ -831,7 +893,7 @@ function renderApprovals(){
       </div>
     </div>`).join(''):`<div class="empty"><i class="ti ti-checks"></i><p>No pending approvals.</p></div>`;
 }
-function doAppr(id,action){APPROVALS.splice(APPROVALS.findIndex(a=>a.id===id),1);refreshBadges();renderApprovals();toast(action==='approved'?'Request approved.':'Request rejected.');}
+async function doAppr(id,action){APPROVALS.splice(APPROVALS.findIndex(a=>a.id===id),1);await dbDeleteApproval(id);refreshBadges();renderApprovals();toast(action==='approved'?'Request approved.':'Request rejected.');}
 
 // ── ASSETS ────────────────────────────────────────────────────────────────────
 function renderAssets(){
@@ -873,13 +935,22 @@ function openAssetModal(id){
   }
   document.getElementById('modal-asset').classList.add('open');
 }
-function saveAsset(){
+async function saveAsset(){
   const tag=document.getElementById('am-tag').value.trim();
   const name=document.getElementById('am-name').value.trim();
   if(!name){alert('Asset name is required.');return;}
   const data={tag:tag||'AST-'+String(nextAssetId).padStart(4,'0'),name,type:document.getElementById('am-type').value,assignedTo:document.getElementById('am-assign').value||'—',assignedEmpId:document.getElementById('am-empid').value||'',status:document.getElementById('am-status').value,serial:document.getElementById('am-serial').value,updated:nows()};
-  if(editAssetId){Object.assign(ASSETS.find(a=>a.id===editAssetId),data);toast('Asset updated.');}
-  else{ASSETS.push({id:nextAssetId++,...data});toast('Asset added.');}
+  if(editAssetId){
+    Object.assign(ASSETS.find(a=>a.id===editAssetId),data);
+    await dbUpdateAsset(ASSETS.find(a=>a.id===editAssetId));
+    toast('Asset updated.');
+  }else{
+    const newAsset={id:nextAssetId++,...data};
+    ASSETS.push(newAsset);
+    const dbId=await dbInsertAsset(newAsset);
+    if(dbId)newAsset.id=dbId;
+    toast('Asset added.');
+  }
   cm('modal-asset');renderAssets();
 }
 
@@ -928,7 +999,7 @@ function openUserModal(id){
   }
   document.getElementById('modal-user').classList.add('open');
 }
-function saveUser(){
+async function saveUser(){
   const name=document.getElementById('um-name').value.trim();
   const uname=document.getElementById('um-uname').value.trim();
   const pass=document.getElementById('um-pass').value.trim();
@@ -938,19 +1009,24 @@ function saveUser(){
     u.name=name;u.username=uname;u.password=pass;
     u.role=document.getElementById('um-role').value;
     u.dept=document.getElementById('um-dept').value;
+    await dbUpdateUser(u);
     toast('User updated.');
   }else{
     const empId='EMP-'+String(nextEmpNum).padStart(4,'0');
-    USERS.push({id:nextUserId++,empId,name,username:uname,password:pass,role:document.getElementById('um-role').value,dept:document.getElementById('um-dept').value,active:true});
+    const newUser={id:nextUserId++,empId,name,username:uname,password:pass,role:document.getElementById('um-role').value,dept:document.getElementById('um-dept').value,active:true};
+    USERS.push(newUser);
     nextEmpNum++;
+    await dbInsertUser(newUser);
     toast('User added. They can now sign in.');
   }
   cm('modal-user');renderAccess();
 }
-function toggleUser(id){
+async function toggleUser(id){
   const u=USERS.find(x=>x.id===id);
   if(u.id===CU.id){toast('Cannot disable your own account.');return;}
-  u.active=!u.active;toast(u.active?`${u.name} enabled.`:`${u.name} disabled.`);renderAccess();
+  u.active=!u.active;
+  await dbUpdateUser(u);
+  toast(u.active?`${u.name} enabled.`:`${u.name} disabled.`);renderAccess();
 }
 
 // ── NEW TICKET ────────────────────────────────────────────────────────────────
@@ -975,11 +1051,11 @@ function openNewTicket(){
   document.getElementById('ai-box').style.display='none';
   document.getElementById('modal-new').classList.add('open');
 }
-function submitTicket(){
+async function submitTicket(){
   const subj=document.getElementById('nw-subj').value.trim();
   if(!subj){alert('Please enter a subject.');return;}
   const asset=getUserAsset(CU.name);
-  TICKETS.unshift({
+  const newTicket={
     id:'TKT-'+nextTktNum++,
     subject:subj,
     category:document.getElementById('nw-cat').value,
@@ -991,7 +1067,9 @@ function submitTicket(){
     priority:document.getElementById('nw-urg').value,
     status:'open',sla:'ok',
     created:nows(),comments:[],resolution:''
-  });
+  };
+  TICKETS.unshift(newTicket);
+  await dbInsertTicket(newTicket);
   cm('modal-new');refreshBadges();
   toast('Ticket submitted successfully.');
   if(CU.role==='user')showPage('my-tickets');
@@ -1087,11 +1165,11 @@ function openDetail(id){
   document.getElementById('det-foot').innerHTML=`<button class="btn btn-ghost" onclick="cm('modal-det')">Close</button>`;
   document.getElementById('modal-det').classList.add('open');
 }
-function doAss(id){const t=TICKETS.find(x=>x.id===id);t.assignee=document.getElementById('d-ass').value;if(t.status==='open')t.status='inprogress';t.comments.push({by:CU.name,time:nows(),text:`Assigned to ${t.assignee}.`});reopen(id);}
-function doTrans(id){const t=TICKETS.find(x=>x.id===id);const to=document.getElementById('d-trans').value;t.comments.push({by:CU.name,time:nows(),text:`Transferred to ${to}.`});t.assignee=to;reopen(id);}
-function doStat(id){const t=TICKETS.find(x=>x.id===id);t.status=document.getElementById('d-stat').value;t.comments.push({by:CU.name,time:nows(),text:`Status updated to "${t.status}".`});reopen(id);}
-function doCom(id){const t=TICKETS.find(x=>x.id===id);const txt=document.getElementById('d-com').value.trim();if(!txt)return;t.comments.push({by:CU.name,time:nows(),text:txt});reopen(id);}
-function doRes(id){const t=TICKETS.find(x=>x.id===id);const res=document.getElementById('d-res').value.trim();if(!res){alert('Please enter a resolution note.');return;}t.status='resolved';t.resolution=res;t.comments.push({by:CU.name,time:nows(),text:'Resolved: '+res});reopen(id);toast('Ticket resolved.');}
+async function doAss(id){const t=TICKETS.find(x=>x.id===id);t.assignee=document.getElementById('d-ass').value;if(t.status==='open')t.status='inprogress';const c={by:CU.name,time:nows(),text:`Assigned to ${t.assignee}.`};t.comments.push(c);await dbUpdateTicket(t);await dbInsertComment(id,c);reopen(id);}
+async function doTrans(id){const t=TICKETS.find(x=>x.id===id);const to=document.getElementById('d-trans').value;const c={by:CU.name,time:nows(),text:`Transferred to ${to}.`};t.comments.push(c);t.assignee=to;await dbUpdateTicket(t);await dbInsertComment(id,c);reopen(id);}
+async function doStat(id){const t=TICKETS.find(x=>x.id===id);t.status=document.getElementById('d-stat').value;const c={by:CU.name,time:nows(),text:`Status updated to "${t.status}".`};t.comments.push(c);await dbUpdateTicket(t);await dbInsertComment(id,c);reopen(id);}
+async function doCom(id){const t=TICKETS.find(x=>x.id===id);const txt=document.getElementById('d-com').value.trim();if(!txt)return;const c={by:CU.name,time:nows(),text:txt};t.comments.push(c);await dbInsertComment(id,c);reopen(id);}
+async function doRes(id){const t=TICKETS.find(x=>x.id===id);const res=document.getElementById('d-res').value.trim();if(!res){alert('Please enter a resolution note.');return;}t.status='resolved';t.resolution=res;const c={by:CU.name,time:nows(),text:'Resolved: '+res};t.comments.push(c);await dbUpdateTicket(t);await dbInsertComment(id,c);reopen(id);toast('Ticket resolved.');}
 function reopen(id){refreshBadges();if(curPage==='all-tickets')renderAllTickets();if(curPage==='my-tickets')renderMyTickets();if(curPage==='dashboard')renderDashboard();cm('modal-det');setTimeout(()=>openDetail(id),80);}
 
 // ── FILTERS ───────────────────────────────────────────────────────────────────
@@ -1116,4 +1194,3 @@ document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',func
 </script>
 </body>
 </html>
-/
