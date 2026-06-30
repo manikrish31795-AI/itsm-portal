@@ -6,6 +6,7 @@
 <title>ServiceDesk — IT Operations</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 /* ── DESIGN TOKENS ─────────────────────────────────────────────────────────── */
 /* Palette: deep navy infrastructure + slate neutrals + single cyan accent.
@@ -50,44 +51,53 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--cyan)!im
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
 
-/* ── LOGIN ──────────────────────────────────────────────────────────────────── */
+/* ── LOGIN — split screen, form on left, cloud visual on right ─────────────── */
 #login-screen{
-  min-height:100vh;display:flex;align-items:center;justify-content:center;
-  background:var(--ink);
-  background-image: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(34,211,238,0.08) 0%, transparent 70%);
+  min-height:100vh;display:flex;background:var(--ink);
 }
-.lc{
-  width:380px;
-  background:var(--panel);
-  border:1px solid var(--line);
-  border-radius:var(--rl);
-  padding:40px 36px 32px;
-  position:relative;
-  overflow:hidden;
+.login-left{
+  width:420px;min-width:340px;display:flex;flex-direction:column;justify-content:center;
+  padding:48px 56px;background:var(--ink);position:relative;z-index:2;
 }
-.lc::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+.login-right{
+  flex:1;position:relative;overflow:hidden;
+  background:linear-gradient(160deg,#0B1E3D 0%,#103A66 38%,#1668A8 70%,#22D3EE 130%);
+  display:flex;align-items:center;justify-content:center;
 }
-.lc-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px;}
-.lc-icon{width:40px;height:40px;border-radius:8px;background:var(--cyan-dim);border:1px solid rgba(34,211,238,0.25);display:flex;align-items:center;justify-content:center;}
-.lc-icon .ti{font-size:20px;color:var(--cyan);}
-.lc-brand h1{font-size:17px;font-weight:600;color:var(--tx1);letter-spacing:-0.02em;}
+.cloud-shape{position:absolute;border-radius:50%;filter:blur(2px);opacity:0.9;background:rgba(255,255,255,0.9);}
+.cloud-svg{position:relative;z-index:1;width:78%;max-width:480px;}
+.cloud-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:40px 40px;}
+.cloud-orb{position:absolute;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,0.5),transparent 70%);filter:blur(20px);}
+.login-right-text{position:absolute;bottom:48px;left:48px;right:48px;z-index:2;}
+.login-right-text h3{color:#fff;font-size:20px;font-weight:600;margin-bottom:6px;letter-spacing:-0.01em;}
+.login-right-text p{color:rgba(255,255,255,0.75);font-size:13px;line-height:1.6;max-width:380px;}
+
+.lc-logo{display:flex;align-items:center;gap:10px;margin-bottom:32px;}
+.lc-icon{width:42px;height:42px;border-radius:9px;background:var(--cyan-dim);border:1px solid rgba(34,211,238,0.25);display:flex;align-items:center;justify-content:center;}
+.lc-icon .ti{font-size:21px;color:var(--cyan);}
+.lc-brand h1{font-size:18px;font-weight:600;color:var(--tx1);letter-spacing:-0.02em;}
 .lc-brand p{font-size:11px;color:var(--tx3);font-weight:400;text-transform:uppercase;letter-spacing:0.08em;}
+.lc-heading{margin-bottom:28px;}
+.lc-heading h2{font-size:22px;font-weight:600;color:var(--tx1);margin-bottom:6px;letter-spacing:-0.01em;}
+.lc-heading p{font-size:13px;color:var(--tx3);}
 .lf-label{font-size:11px;font-weight:500;color:var(--tx2);text-transform:uppercase;letter-spacing:0.07em;display:block;margin-bottom:5px;margin-top:14px;}
 .lf-input{
-  width:100%;padding:9px 12px;border-radius:var(--r);
+  width:100%;padding:10px 12px;border-radius:var(--r);
   border:1px solid var(--line);background:var(--raised);
   color:var(--tx1);font-size:13px;transition:border-color .15s;
 }
 .lf-input:first-of-type{margin-top:0;}
 .lf-err{color:var(--red);font-size:12px;margin-top:8px;display:none;background:var(--red-dim);padding:7px 10px;border-radius:var(--r);}
 .lf-btn{
-  width:100%;margin-top:20px;padding:10px;border-radius:var(--r);
+  width:100%;margin-top:22px;padding:11px;border-radius:var(--r);
   border:none;background:var(--cyan);color:var(--ink);
   font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.01em;transition:opacity .15s;
 }
 .lf-btn:hover{opacity:0.88;}
+@media(max-width:760px){
+  .login-right{display:none;}
+  .login-left{width:100%;padding:40px 28px;}
+}
 
 /* ── APP SHELL ───────────────────────────────────────────────────────────────── */
 #app{display:none;height:100vh;flex-direction:row;overflow:hidden;}
@@ -320,10 +330,14 @@ tbody tr.rc:hover td{background:var(--raised);}
 
 <!-- ── LOGIN ─────────────────────────────────────────────────────────────────── -->
 <div id="login-screen">
-  <div class="lc">
+  <div class="login-left">
     <div class="lc-logo">
       <div class="lc-icon"><i class="ti ti-headset"></i></div>
       <div class="lc-brand"><h1>ServiceDesk</h1><p>IT Operations Portal</p></div>
+    </div>
+    <div class="lc-heading">
+      <h2>Welcome back</h2>
+      <p>Sign in to manage tickets, assets, and IT operations.</p>
     </div>
     <label class="lf-label">Username</label>
     <input class="lf-input" type="text" id="l-user" placeholder="Enter your username" autocomplete="username">
@@ -332,6 +346,38 @@ tbody tr.rc:hover td{background:var(--raised);}
     <div class="lf-err" id="l-err"><i class="ti ti-alert-circle"></i> Invalid username or password.</div>
     <button class="lf-btn" onclick="doLogin()">Sign in</button>
     <div id="l-status" style="font-size:11px;color:var(--tx3);text-align:center;margin-top:10px;display:none;">Connecting to database...</div>
+  </div>
+  <div class="login-right">
+    <div class="cloud-grid"></div>
+    <div class="cloud-orb" style="width:280px;height:280px;top:8%;left:10%;"></div>
+    <div class="cloud-orb" style="width:200px;height:200px;bottom:15%;right:12%;"></div>
+    <svg class="cloud-svg" viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg">
+      <g opacity="0.95">
+        <ellipse cx="150" cy="150" rx="85" ry="50" fill="#ffffff"/>
+        <ellipse cx="210" cy="130" rx="65" ry="58" fill="#ffffff"/>
+        <ellipse cx="260" cy="155" rx="60" ry="42" fill="#ffffff"/>
+        <ellipse cx="120" cy="170" rx="55" ry="35" fill="#ffffff"/>
+      </g>
+      <g stroke="#0B1E3D" stroke-width="2.5" fill="none" opacity="0.85">
+        <circle cx="150" cy="148" r="10"/>
+        <circle cx="195" cy="148" r="10"/>
+        <circle cx="173" cy="170" r="10"/>
+        <line x1="150" y1="148" x2="173" y2="170"/>
+        <line x1="195" y1="148" x2="173" y2="170"/>
+        <line x1="150" y1="148" x2="195" y2="148"/>
+      </g>
+      <g opacity="0.5">
+        <circle cx="80" cy="60" r="3" fill="#ffffff"/>
+        <circle cx="330" cy="80" r="3" fill="#ffffff"/>
+        <circle cx="60" cy="230" r="3" fill="#ffffff"/>
+        <circle cx="340" cy="220" r="3" fill="#ffffff"/>
+        <circle cx="200" cy="40" r="3" fill="#ffffff"/>
+      </g>
+    </svg>
+    <div class="login-right-text">
+      <h3>Cloud-connected IT operations</h3>
+      <p>Tickets, assets, and approvals sync in real time across your organization — accessible securely from anywhere.</p>
+    </div>
   </div>
 </div>
 
@@ -372,6 +418,7 @@ tbody tr.rc:hover td{background:var(--raised);}
         <button class="fb" onclick="sf(this,'my','inprogress')">In progress</button>
         <button class="fb" onclick="sf(this,'my','pending')">Pending</button>
         <button class="fb" onclick="sf(this,'my','resolved')">Resolved</button>
+        <button class="fb" onclick="sf(this,'my','closed')">Closed</button>
       </div>
       <div class="card"><table>
         <thead><tr><th>ID</th><th>Subject</th><th>Category</th><th>Asset</th><th>Priority</th><th>Status</th><th>Created</th><th>SLA</th><th></th></tr></thead>
@@ -393,6 +440,23 @@ tbody tr.rc:hover td{background:var(--raised);}
         <div class="card"><div class="card-head"><h3>Tickets by category</h3></div><div class="card-body" id="cat-chart"></div></div>
         <div class="card"><div class="card-head"><h3>Recent activity</h3></div><div class="card-body" id="recent-act"></div></div>
       </div>
+    </div>
+
+    <!-- TECH/ADMIN: My Assigned -->
+    <div class="page-wrap" id="page-my-assigned">
+      <div class="ph"><h2>My Assigned Tickets</h2></div>
+      <div class="fbar">
+        <button class="fb on" onclick="sf(this,'mine','all')">All</button>
+        <button class="fb" onclick="sf(this,'mine','open')">Open</button>
+        <button class="fb" onclick="sf(this,'mine','inprogress')">In progress</button>
+        <button class="fb" onclick="sf(this,'mine','pending')">Pending</button>
+        <button class="fb" onclick="sf(this,'mine','resolved')">Resolved</button>
+        <button class="fb" onclick="sf(this,'mine','closed')">Closed</button>
+      </div>
+      <div class="card"><table>
+        <thead><tr><th>ID</th><th>Subject</th><th>Category</th><th>Asset</th><th>Requester</th><th>Priority</th><th>Status</th><th>SLA</th><th>Created</th><th></th></tr></thead>
+        <tbody id="mine-body"></tbody>
+      </table></div>
     </div>
 
     <!-- TECH/ADMIN: All Tickets -->
@@ -417,6 +481,7 @@ tbody tr.rc:hover td{background:var(--raised);}
         <tbody id="all-body"></tbody>
       </table></div>
     </div>
+
 
     <!-- SLA -->
     <div class="page-wrap" id="page-sla">
@@ -507,7 +572,7 @@ tbody tr.rc:hover td{background:var(--raised);}
         <button class="fb" onclick="sfAccess(this,'inactive')">Inactive</button>
       </div>
       <div class="card"><table>
-        <thead><tr><th>Name</th><th>Emp ID</th><th>Username</th><th>Role</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Name</th><th>Emp ID</th><th>Email</th><th>Username</th><th>Role</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody id="access-body"></tbody>
       </table></div>
     </div>
@@ -567,6 +632,7 @@ tbody tr.rc:hover td{background:var(--raised);}
       <div class="fgrid">
         <div class="fg full"><label>Full name *</label><input type="text" id="um-name" placeholder="e.g. Rahul Sharma"></div>
         <div class="fg"><label>Employee ID *</label><input type="text" id="um-empid" placeholder="e.g. EMP-0007"></div>
+        <div class="fg"><label>Email address *</label><input type="email" id="um-email" placeholder="e.g. rahul.sharma@company.com"></div>
         <div class="fg"><label>Username *</label><input type="text" id="um-uname" placeholder="e.g. rahul.sharma"></div>
         <div class="fg"><label>Password *</label><input type="text" id="um-pass" placeholder="Set a password"></div>
         <div class="fg"><label>Role *</label>
@@ -637,7 +703,7 @@ async function loadAllData(){
     toast('Database connection error — check console.');
     return false;
   }
-  USERS = u.map(x=>({id:x.id,empId:x.emp_id,name:x.name,username:x.username,password:x.password,role:x.role,dept:x.dept,active:x.active}));
+  USERS = u.map(x=>({id:x.id,empId:x.emp_id,name:x.name,username:x.username,password:x.password,role:x.role,dept:x.dept,active:x.active,email:x.email||''}));
   nextUserId = USERS.length ? Math.max(...USERS.map(x=>x.id))+1 : 1;
   nextEmpNum = USERS.length ? Math.max(...USERS.map(x=>parseInt((x.empId||'EMP-0000').split('-')[1]||0)))+1 : 1;
 
@@ -659,11 +725,11 @@ async function loadAllData(){
 
 // ── DB write helpers ──────────────────────────────────────────────────────────
 async function dbInsertUser(u){
-  const {error}=await dbc.from('users').insert([{emp_id:u.empId,name:u.name,username:u.username,password:u.password,role:u.role,dept:u.dept,active:u.active}]);
+  const {error}=await dbc.from('users').insert([{emp_id:u.empId,name:u.name,username:u.username,password:u.password,role:u.role,dept:u.dept,active:u.active,email:u.email}]);
   if(error)console.error('dbInsertUser',error);
 }
 async function dbUpdateUser(u){
-  const {error}=await dbc.from('users').update({name:u.name,username:u.username,password:u.password,role:u.role,dept:u.dept,active:u.active}).eq('id',u.id);
+  const {error}=await dbc.from('users').update({name:u.name,username:u.username,password:u.password,role:u.role,dept:u.dept,active:u.active,email:u.email}).eq('id',u.id);
   if(error)console.error('dbUpdateUser',error);
 }
 async function dbInsertAsset(a){
@@ -704,8 +770,8 @@ const KB=[
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let CU=null; // current user
 let curPage='';
-let filt={my:'all',all:'all'};
-let srch={my:'',all:''};
+let filt={my:'all',all:'all',mine:'all'};
+let srch={my:'',all:'',mine:''};
 let aiTimer=null;
 let editUserId=null;
 let editAssetId=null;
@@ -752,13 +818,14 @@ const TABS={
   ],
   tech:[
     {id:'dashboard',icon:'ti-layout-dashboard',label:'Dashboard'},
+    {id:'my-assigned',icon:'ti-user-check',label:'My Assigned',badge:'myAssigned'},
     {id:'all-tickets',icon:'ti-ticket',label:'All Tickets',badge:'allOpen'},
     {id:'sla',icon:'ti-clock',label:'SLA Monitor'},
     {id:'kb-admin',icon:'ti-books',label:'Knowledge Base'},
-    {id:'access',icon:'ti-users',label:'Portal Access'},
   ],
   admin:[
     {id:'dashboard',icon:'ti-layout-dashboard',label:'Dashboard'},
+    {id:'my-assigned',icon:'ti-user-check',label:'My Assigned',badge:'myAssigned'},
     {id:'all-tickets',icon:'ti-ticket',label:'All Tickets',badge:'allOpen'},
     {id:'sla',icon:'ti-clock',label:'SLA Monitor'},
     {id:'approvals',icon:'ti-checks',label:'Approvals',badge:'appr'},
@@ -786,6 +853,7 @@ function bc(k){
   if(k==='myOpen')return TICKETS.filter(t=>t.requester===CU.name&&!['resolved','closed'].includes(t.status)).length;
   if(k==='allOpen')return TICKETS.filter(t=>t.status==='open').length;
   if(k==='appr')return APPROVALS.length;
+  if(k==='myAssigned')return TICKETS.filter(t=>t.assignee===CU.name&&!['resolved','closed'].includes(t.status)).length;
   return 0;
 }
 function refreshBadges(){
@@ -812,13 +880,15 @@ function showPage(id){
   const titles={
     'my-tickets':'My Tickets','kb-user':'Knowledge Base','dashboard':'Dashboard',
     'all-tickets':'All Tickets','sla':'SLA Monitor','approvals':'Approvals',
-    'assets':'Asset Inventory','analytics':'Analytics','kb-admin':'Knowledge Base','access':'Portal Access'
+    'assets':'Asset Inventory','analytics':'Analytics','kb-admin':'Knowledge Base','access':'Portal Access',
+    'my-assigned':'My Assigned Tickets'
   };
   document.getElementById('topbar-title').textContent=titles[id]||id;
-  const showSearch=['my-tickets','all-tickets'].includes(id);
+  const showSearch=['my-tickets','all-tickets','my-assigned'].includes(id);
   document.getElementById('topbar-search-wrap').style.display=showSearch?'block':'none';
   if(id==='my-tickets')renderMyTickets();
   if(id==='all-tickets')renderAllTickets();
+  if(id==='my-assigned')renderMyAssigned();
   if(id==='dashboard')renderDashboard();
   if(id==='approvals')renderApprovals();
   if(id==='assets')renderAssets();
@@ -826,7 +896,7 @@ function showPage(id){
   if(id==='kb-admin')renderKB('kb-a');
   if(id==='access')renderAccess();
 }
-function globalSearch(v){srch.my=v.toLowerCase();srch.all=v.toLowerCase();if(curPage==='my-tickets')renderMyTickets();if(curPage==='all-tickets')renderAllTickets();}
+function globalSearch(v){srch.my=v.toLowerCase();srch.all=v.toLowerCase();srch.mine=v.toLowerCase();if(curPage==='my-tickets')renderMyTickets();if(curPage==='all-tickets')renderAllTickets();if(curPage==='my-assigned')renderMyAssigned();}
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function pb(p){const m={critical:'b-crit',high:'b-high',medium:'b-med',low:'b-low'};return`<span class="badge ${m[p]||'b-low'}">${cap(p)}</span>`;}
@@ -865,6 +935,21 @@ function renderAllTickets(){
     <td>${pb(t.priority)}</td><td>${sb(t.status)}</td><td>${slab(t.sla)}</td>
     <td><button class="btn btn-sm" onclick="event.stopPropagation();openDetail('${t.id}')">Manage</button></td>
   </tr>`).join(''):`<tr><td colspan="11"><div class="empty"><i class="ti ti-ticket"></i><p>No tickets found.</p></div></td></tr>`;
+}
+
+// ── MY ASSIGNED (technician/admin view of tickets on their own name) ──────────
+function renderMyAssigned(){
+  let list=TICKETS.filter(t=>t.assignee===CU.name);
+  if(filt.mine!=='all')list=list.filter(t=>t.status===filt.mine);
+  if(srch.mine)list=list.filter(t=>t.subject.toLowerCase().includes(srch.mine)||t.id.toLowerCase().includes(srch.mine)||t.requester.toLowerCase().includes(srch.mine));
+  document.getElementById('mine-body').innerHTML=list.length?list.map(t=>`<tr class="rc" onclick="openDetail('${t.id}')">
+    <td class="mono">${t.id}</td><td>${t.subject}</td><td>${t.category}</td>
+    <td>${t.assetTag&&t.assetTag!=='N/A'?`<span class="atag">${t.assetTag}</span>`:`<span class="badge b-na">N/A</span>`}</td>
+    <td>${t.requester}</td>
+    <td>${pb(t.priority)}</td><td>${sb(t.status)}</td><td>${slab(t.sla)}</td>
+    <td class="mono" style="color:var(--tx3)">${t.created}</td>
+    <td><button class="btn btn-sm" onclick="event.stopPropagation();openDetail('${t.id}')">Manage</button></td>
+  </tr>`).join(''):`<tr><td colspan="10"><div class="empty"><i class="ti ti-user-check"></i><p>No tickets currently assigned to you.</p></div></td></tr>`;
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
@@ -989,6 +1074,7 @@ function renderAccess(){
     return`<tr>
       <td><div style="display:flex;align-items:center;gap:10px"><div class="user-row-avatar" style="background:${col}18;color:${col}">${ini}</div><span style="font-weight:500">${u.name}</span></div></td>
       <td class="mono" style="font-size:11px;color:var(--cyan)">${u.empId}</td>
+      <td class="mono" style="font-size:11px;color:var(--tx2)">${u.email||'—'}</td>
       <td class="mono">${u.username}</td>
       <td><span class="badge ${rBdg[u.role]}">${rLbl[u.role]}</span></td>
       <td style="color:var(--tx2)">${u.dept||'—'}</td>
@@ -998,7 +1084,7 @@ function renderAccess(){
         <button class="btn btn-sm ${u.active?'btn-red':'btn-green'}" onclick="toggleUser(${u.id})">${u.active?'<i class="ti ti-user-off"></i> Disable':'<i class="ti ti-user-check"></i> Enable'}</button>
       </div></td>
     </tr>`;
-  }).join(''):`<tr><td colspan="7"><div class="empty"><i class="ti ti-users"></i><p>No ${accessFilter==='all'?'':accessFilter+' '}users found.</p></div></td></tr>`;
+  }).join(''):`<tr><td colspan="8"><div class="empty"><i class="ti ti-users"></i><p>No ${accessFilter==='all'?'':accessFilter+' '}users found.</p></div></td></tr>`;
 }
 function openUserModal(id){
   editUserId=id;
@@ -1008,13 +1094,14 @@ function openUserModal(id){
     const u=USERS.find(x=>x.id===id);
     document.getElementById('um-name').value=u.name;
     document.getElementById('um-empid').value=u.empId;
+    document.getElementById('um-email').value=u.email||'';
     document.getElementById('um-uname').value=u.username;
     document.getElementById('um-pass').value=u.password;
     document.getElementById('um-role').value=u.role;
     document.getElementById('um-dept').value=u.dept||'';
     document.getElementById('um-active').value=u.active?'true':'false';
   }else{
-    ['um-name','um-empid','um-uname','um-pass','um-dept'].forEach(f=>document.getElementById(f).value='');
+    ['um-name','um-empid','um-email','um-uname','um-pass','um-dept'].forEach(f=>document.getElementById(f).value='');
     document.getElementById('um-role').value='user';
     document.getElementById('um-active').value='true';
   }
@@ -1023,24 +1110,26 @@ function openUserModal(id){
 async function saveUser(){
   const name=document.getElementById('um-name').value.trim();
   const empId=document.getElementById('um-empid').value.trim();
+  const email=document.getElementById('um-email').value.trim();
   const uname=document.getElementById('um-uname').value.trim();
   const pass=document.getElementById('um-pass').value.trim();
   const active=document.getElementById('um-active').value==='true';
-  if(!name||!empId||!uname||!pass){alert('Name, Employee ID, username and password are required.');return;}
+  if(!name||!empId||!email||!uname||!pass){alert('Name, Employee ID, email, username and password are required.');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Please enter a valid email address.');return;}
   const dupEmp=USERS.find(x=>x.empId.toLowerCase()===empId.toLowerCase()&&x.id!==editUserId);
   if(dupEmp){alert('That Employee ID is already in use by '+dupEmp.name+'.');return;}
   const dupUser=USERS.find(x=>x.username.toLowerCase()===uname.toLowerCase()&&x.id!==editUserId);
   if(dupUser){alert('That username is already taken.');return;}
   if(editUserId){
     const u=USERS.find(x=>x.id===editUserId);
-    u.name=name;u.empId=empId;u.username=uname;u.password=pass;
+    u.name=name;u.empId=empId;u.email=email;u.username=uname;u.password=pass;
     u.role=document.getElementById('um-role').value;
     u.dept=document.getElementById('um-dept').value;
     u.active=active;
     await dbUpdateUser(u);
     toast('User updated.');
   }else{
-    const newUser={id:nextUserId++,empId,name,username:uname,password:pass,role:document.getElementById('um-role').value,dept:document.getElementById('um-dept').value,active};
+    const newUser={id:nextUserId++,empId,name,email,username:uname,password:pass,role:document.getElementById('um-role').value,dept:document.getElementById('um-dept').value,active};
     USERS.push(newUser);
     await dbInsertUser(newUser);
     toast('User added. They can now sign in.');
@@ -1096,10 +1185,42 @@ async function submitTicket(){
   };
   TICKETS.unshift(newTicket);
   await dbInsertTicket(newTicket);
+  notifyAdminsNewTicket(newTicket);
   cm('modal-new');refreshBadges();
   toast('Ticket submitted successfully.');
   if(CU.role==='user')showPage('my-tickets');
   else showPage('all-tickets');
+}
+
+// ── EMAIL NOTIFICATIONS (EmailJS) ─────────────────────────────────────────────
+// 1. Create a free account at https://www.emailjs.com
+// 2. Add an Email Service (e.g. Gmail) and create a Template with variables:
+//    {{to_email}} {{ticket_id}} {{subject}} {{requester}} {{priority}} {{category}}
+// 3. Replace the 3 placeholder values below with your own IDs from the EmailJS dashboard.
+const EMAILJS_PUBLIC_KEY = 'YOUR_EMAILJS_PUBLIC_KEY';
+const EMAILJS_SERVICE_ID = 'YOUR_EMAILJS_SERVICE_ID';
+const EMAILJS_TEMPLATE_ID = 'YOUR_EMAILJS_TEMPLATE_ID';
+let emailjsReady=false;
+function initEmailJS(){
+  if(emailjsReady)return;
+  try{ emailjs.init({publicKey:EMAILJS_PUBLIC_KEY}); emailjsReady=true; }catch(e){console.error('EmailJS init failed',e);}
+}
+function notifyAdminsNewTicket(t){
+  initEmailJS();
+  const admins=USERS.filter(u=>u.role==='admin'&&u.active&&u.email);
+  if(!admins.length)return;
+  admins.forEach(a=>{
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email:a.email,
+      ticket_id:t.id,
+      subject:t.subject,
+      requester:t.requester,
+      requester_emp_id:t.requesterEmpId,
+      category:t.category,
+      priority:t.priority,
+      created:t.created
+    }).catch(err=>console.error('Email notify failed for',a.email,err));
+  });
 }
 
 // ── AI ────────────────────────────────────────────────────────────────────────
@@ -1242,7 +1363,7 @@ async function submitFeedback(id){
 function reopen(id){refreshBadges();if(curPage==='all-tickets')renderAllTickets();if(curPage==='my-tickets')renderMyTickets();if(curPage==='dashboard')renderDashboard();cm('modal-det');setTimeout(()=>openDetail(id),80);}
 
 // ── FILTERS ───────────────────────────────────────────────────────────────────
-function sf(btn,scope,val){filt[scope]=val;btn.closest('.fbar').querySelectorAll('.fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');if(scope==='my')renderMyTickets();else renderAllTickets();}
+function sf(btn,scope,val){filt[scope]=val;btn.closest('.fbar').querySelectorAll('.fb').forEach(b=>b.classList.remove('on'));btn.classList.add('on');if(scope==='my')renderMyTickets();else if(scope==='mine')renderMyAssigned();else renderAllTickets();}
 
 // ── EXPORT CSV ────────────────────────────────────────────────────────────────
 function exportCSV(type){
