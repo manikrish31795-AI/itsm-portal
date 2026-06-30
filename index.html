@@ -420,6 +420,7 @@ tbody tr.rc:hover td{background:var(--raised);}
         <button class="fb" onclick="sf(this,'my','pending')">Pending</button>
         <button class="fb" onclick="sf(this,'my','resolved')">Resolved</button>
         <button class="fb" onclick="sf(this,'my','closed')">Closed</button>
+        <button class="fb" onclick="sf(this,'my','cancelled')">Cancelled</button>
       </div>
       <div class="card"><table>
         <thead><tr><th>ID</th><th>Subject</th><th>Category</th><th>Asset</th><th>Priority</th><th>Status</th><th>Created</th><th>SLA</th><th></th></tr></thead>
@@ -453,6 +454,7 @@ tbody tr.rc:hover td{background:var(--raised);}
         <button class="fb" onclick="sf(this,'mine','pending')">Pending</button>
         <button class="fb" onclick="sf(this,'mine','resolved')">Resolved</button>
         <button class="fb" onclick="sf(this,'mine','closed')">Closed</button>
+        <button class="fb" onclick="sf(this,'mine','cancelled')">Cancelled</button>
       </div>
       <div class="card"><table>
         <thead><tr><th>ID</th><th>Subject</th><th>Category</th><th>Asset</th><th>Requester</th><th>Priority</th><th>Status</th><th>SLA</th><th>Created</th><th></th></tr></thead>
@@ -476,6 +478,7 @@ tbody tr.rc:hover td{background:var(--raised);}
         <button class="fb" onclick="sf(this,'all','pending')">Pending</button>
         <button class="fb" onclick="sf(this,'all','resolved')">Resolved</button>
         <button class="fb" onclick="sf(this,'all','closed')">Closed</button>
+        <button class="fb" onclick="sf(this,'all','cancelled')">Cancelled</button>
       </div>
       <div class="card"><table>
         <thead><tr><th>ID</th><th>Subject</th><th>Category</th><th>Asset</th><th>Requester</th><th>Emp ID</th><th>Assignee</th><th>Priority</th><th>Status</th><th>SLA</th><th></th></tr></thead>
@@ -595,6 +598,20 @@ tbody tr.rc:hover td{background:var(--raised);}
           <div id="nw-asset-box"></div>
         </div>
         <hr class="div-line full" style="grid-column:1/-1;">
+        <div class="fg full">
+          <label>Ticket type *</label>
+          <select id="nw-type" onchange="toggleApprovalNote()">
+            <option value="incident">Incident — something is broken or not working</option>
+            <option value="software">Software Request — new application or license</option>
+            <option value="hardware">Hardware Request — new device or equipment</option>
+          </select>
+        </div>
+        <div class="fg full" id="nw-approval-note" style="display:none;">
+          <div class="ai-box" style="background:var(--purple-dim);border-color:rgba(167,139,250,.3);margin-top:0;">
+            <div class="ai-head" style="color:var(--purple);"><i class="ti ti-shield-check"></i> Requires approval</div>
+            <div style="font-size:12px;color:var(--tx2);">This request type needs manager/admin approval before a technician begins work. It will appear in the Approvals queue once submitted.</div>
+          </div>
+        </div>
         <div class="fg full"><label>Subject *</label><input type="text" id="nw-subj" placeholder="Brief description of the issue" oninput="scheduleAI()"></div>
         <div class="fg full"><label>Description</label><textarea id="nw-desc" placeholder="Full details, error messages, steps to reproduce..." oninput="scheduleAI()"></textarea></div>
         <div class="fg"><label>Category</label>
@@ -712,7 +729,7 @@ async function loadAllData(){
   nextAssetId = ASSETS.length ? Math.max(...ASSETS.map(x=>x.id))+1 : 1;
 
   TICKETS = t.map(x=>({
-    id:x.id,subject:x.subject,category:x.category,requester:x.requester,requesterEmpId:x.requester_emp_id,
+    id:x.id,subject:x.subject,category:x.category,ticketType:x.ticket_type||'incident',requester:x.requester,requesterEmpId:x.requester_emp_id,
     assetTag:x.asset_tag,assetName:x.asset_name,assignee:x.assignee,priority:x.priority,status:x.status,
     sla:x.sla,created:x.created,resolution:x.resolution||'',csat:x.csat||0,csatComment:x.csat_comment||'',
     comments:c.filter(cm=>cm.ticket_id===x.id).map(cm=>({by:cm.by_user,time:cm.time,text:cm.text}))
@@ -720,7 +737,7 @@ async function loadAllData(){
   const nums = TICKETS.map(x=>parseInt((x.id||'TKT-0').split('-')[1]||0));
   nextTktNum = nums.length ? Math.max(...nums)+1 : 1022;
 
-  APPROVALS = ap.map(x=>({id:x.id,title:x.title,desc:x.description,type:x.type,urgency:x.urgency}));
+  APPROVALS = ap.map(x=>({id:x.id,title:x.title,desc:x.description,type:x.type,urgency:x.urgency,linkedTicketId:x.linked_ticket_id||null}));
   return true;
 }
 
@@ -743,7 +760,7 @@ async function dbUpdateAsset(a){
   if(error)console.error('dbUpdateAsset',error);
 }
 async function dbInsertTicket(t){
-  const {error}=await dbc.from('tickets').insert([{id:t.id,subject:t.subject,category:t.category,requester:t.requester,requester_emp_id:t.requesterEmpId,asset_tag:t.assetTag,asset_name:t.assetName,assignee:t.assignee,priority:t.priority,status:t.status,sla:t.sla,created:t.created,resolution:t.resolution}]);
+  const {error}=await dbc.from('tickets').insert([{id:t.id,subject:t.subject,category:t.category,ticket_type:t.ticketType||'incident',requester:t.requester,requester_emp_id:t.requesterEmpId,asset_tag:t.assetTag,asset_name:t.assetName,assignee:t.assignee,priority:t.priority,status:t.status,sla:t.sla,created:t.created,resolution:t.resolution}]);
   if(error)console.error('dbInsertTicket',error);
 }
 async function dbUpdateTicket(t){
@@ -757,6 +774,10 @@ async function dbInsertComment(ticketId,c){
 async function dbDeleteApproval(id){
   const {error}=await dbc.from('approvals').delete().eq('id',id);
   if(error)console.error('dbDeleteApproval',error);
+}
+async function dbInsertApproval(a){
+  const {error}=await dbc.from('approvals').insert([{id:a.id,title:a.title,description:a.desc,type:a.type,urgency:a.urgency,linked_ticket_id:a.linkedTicketId||null}]);
+  if(error)console.error('dbInsertApproval',error);
 }
 
 const KB=[
@@ -901,7 +922,7 @@ function globalSearch(v){srch.my=v.toLowerCase();srch.all=v.toLowerCase();srch.m
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 function pb(p){const m={critical:'b-crit',high:'b-high',medium:'b-med',low:'b-low'};return`<span class="badge ${m[p]||'b-low'}">${cap(p)}</span>`;}
-function sb(s){const m={open:'b-open',inprogress:'b-inp',pending:'b-pend',resolved:'b-res',closed:'b-closed'};const l={open:'Open',inprogress:'In progress',pending:'Pending',resolved:'Resolved',closed:'Closed'};return`<span class="badge ${m[s]||'b-open'}">${l[s]||s}</span>`;}
+function sb(s){const m={open:'b-open',inprogress:'b-inp',pending:'b-pend',pendingapproval:'b-pend',resolved:'b-res',closed:'b-closed',cancelled:'b-closed'};const l={open:'Open',inprogress:'In progress',pending:'Pending',pendingapproval:'Pending approval',resolved:'Resolved',closed:'Closed',cancelled:'Cancelled'};return`<span class="badge ${m[s]||'b-open'}">${l[s]||s}</span>`;}
 function slab(s){if(s==='breach')return`<span class="sla-breach">⚠ Breached</span>`;if(s==='warn')return`<span class="sla-warn">⏱ At risk</span>`;return`<span class="sla-ok">✓ On track</span>`;}
 function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):'';}
 function nows(){return'Jun 26, '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});}
@@ -990,7 +1011,30 @@ function renderApprovals(){
       </div>
     </div>`).join(''):`<div class="empty"><i class="ti ti-checks"></i><p>No pending approvals.</p></div>`;
 }
-async function doAppr(id,action){APPROVALS.splice(APPROVALS.findIndex(a=>a.id===id),1);await dbDeleteApproval(id);refreshBadges();renderApprovals();toast(action==='approved'?'Request approved.':'Request rejected.');}
+async function doAppr(id,action){
+  const appr=APPROVALS.find(a=>a.id===id);
+  APPROVALS.splice(APPROVALS.findIndex(a=>a.id===id),1);
+  await dbDeleteApproval(id);
+  if(appr&&appr.linkedTicketId){
+    const t=TICKETS.find(x=>x.id===appr.linkedTicketId);
+    if(t){
+      if(action==='approved'){
+        t.status='open';
+        const c={by:CU.name,time:nows(),text:'Request approved. Ticket released to the queue for technician assignment.'};
+        t.comments.push(c);await dbInsertComment(t.id,c);
+      }else{
+        t.status='cancelled';
+        const c={by:CU.name,time:nows(),text:'Request rejected by approver. Ticket cancelled.'};
+        t.comments.push(c);await dbInsertComment(t.id,c);
+      }
+      await dbUpdateTicket(t);
+    }
+  }
+  refreshBadges();renderApprovals();
+  if(curPage==='all-tickets')renderAllTickets();
+  if(curPage==='my-tickets')renderMyTickets();
+  toast(action==='approved'?'Request approved.':'Request rejected.');
+}
 
 // ── ASSETS ────────────────────────────────────────────────────────────────────
 function renderAssets(){
@@ -1164,31 +1208,47 @@ function openNewTicket(){
     assetBox.innerHTML=`<div class="na-box"><i class="ti ti-device-laptop-off" style="margin-right:6px"></i>No asset assigned to your account — showing <strong>N/A</strong>.</div>`;
   }
   ['nw-subj','nw-desc'].forEach(f=>document.getElementById(f).value='');
+  document.getElementById('nw-type').value='incident';
+  document.getElementById('nw-approval-note').style.display='none';
   document.getElementById('ai-box').style.display='none';
   document.getElementById('modal-new').classList.add('open');
+}
+function toggleApprovalNote(){
+  const type=document.getElementById('nw-type').value;
+  document.getElementById('nw-approval-note').style.display=(type==='software'||type==='hardware')?'block':'none';
 }
 async function submitTicket(){
   const subj=document.getElementById('nw-subj').value.trim();
   if(!subj){alert('Please enter a subject.');return;}
   const asset=getUserAsset(CU.name);
+  const ticketType=document.getElementById('nw-type').value;
+  const needsApproval=ticketType==='software'||ticketType==='hardware';
   const newTicket={
     id:'TKT-'+nextTktNum++,
     subject:subj,
     category:document.getElementById('nw-cat').value,
+    ticketType:ticketType,
     requester:CU.name,
     requesterEmpId:CU.empId,
     assetTag:asset?asset.tag:'N/A',
     assetName:asset?asset.name:'N/A',
     assignee:'Unassigned',
     priority:document.getElementById('nw-urg').value,
-    status:'open',sla:'ok',
+    status:needsApproval?'pendingapproval':'open',
+    sla:'ok',
     created:nows(),comments:[],resolution:''
   };
   TICKETS.unshift(newTicket);
   await dbInsertTicket(newTicket);
+  if(needsApproval){
+    const typeLbl=ticketType==='software'?'Software Request':'Hardware Request';
+    const newApproval={id:'APR-'+nextTktNum,title:`${typeLbl} — ${subj} (${CU.name})`,desc:`Raised via ticket ${newTicket.id}. ${document.getElementById('nw-desc').value.trim()||'No additional details provided.'}`,type:ticketType==='software'?'Software':'Hardware',urgency:document.getElementById('nw-urg').value,linkedTicketId:newTicket.id};
+    APPROVALS.push(newApproval);
+    await dbInsertApproval(newApproval);
+  }
   notifyAdminsNewTicket(newTicket);
   cm('modal-new');refreshBadges();
-  toast('Ticket submitted successfully.');
+  toast(needsApproval?'Ticket submitted — pending approval.':'Ticket submitted successfully.');
   if(CU.role==='user')showPage('my-tickets');
   else showPage('all-tickets');
 }
@@ -1256,11 +1316,13 @@ function openDetail(id){
   const t=TICKETS.find(x=>x.id===id);if(!t)return;
   document.getElementById('det-title').textContent=t.id;
   const isTech=CU.role==='tech'||CU.role==='admin';
-  const canEdit=isTech&&!['resolved','closed'].includes(t.status);
+  const canEdit=isTech&&!['resolved','closed','cancelled'].includes(t.status);
   const techOpts=USERS.filter(u=>u.role==='tech'||u.role==='admin').map(u=>`<option ${u.name===t.assignee?'selected':''}>${u.name}</option>`).join('');
+  const typeLbl={incident:'Incident',software:'Software Request',hardware:'Hardware Request'}[t.ticketType||'incident']||'Incident';
+  const typeIcon={incident:'ti-alert-circle',software:'ti-apps',hardware:'ti-device-laptop'}[t.ticketType||'incident']||'ti-alert-circle';
   let body=`
     <div style="font-size:14px;font-weight:500;color:var(--tx1);margin-bottom:12px">${t.subject}</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">${pb(t.priority)} ${sb(t.status)} ${slab(t.sla)}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">${pb(t.priority)} ${sb(t.status)} ${slab(t.sla)} <span class="badge b-tech"><i class="ti ${typeIcon}" style="margin-right:3px"></i>${typeLbl}</span></div>
     <div class="sec-title">Ticket information</div>
     <div class="det-grid">
       <div class="dg-item"><div class="dk">Category</div><div class="dv">${t.category}</div></div>
@@ -1272,6 +1334,12 @@ function openDetail(id){
       <div class="dg-item"><div class="dk">Created</div><div class="dv" style="font-family:var(--mono);font-size:11px">${t.created}</div></div>
       <div class="dg-item"><div class="dk">SLA</div><div class="dv">${slab(t.sla)}</div></div>
     </div>`;
+  if(t.status==='pendingapproval'){
+    body+=`<div class="sec-title">Approval status</div><div class="comment-block" style="border-color:rgba(167,139,250,.3);background:var(--purple-dim)"><p><i class="ti ti-clock" style="margin-right:5px"></i>This ${typeLbl.toLowerCase()} is awaiting admin approval before work can begin.</p></div>`;
+  }
+  if(t.status==='cancelled'){
+    body+=`<div class="sec-title">Cancelled</div><div class="comment-block" style="border-color:rgba(248,113,113,.3);background:var(--red-dim)"><p><i class="ti ti-ban" style="margin-right:5px"></i>This ticket was cancelled and is no longer active.</p></div>`;
+  }
   if(t.comments.length){
     body+=`<div class="sec-title">Activity</div>`;
     body+=t.comments.map(c=>`<div class="comment-block"><div class="cm">${c.by} · ${c.time}</div><p>${c.text}</p></div>`).join('');
@@ -1280,6 +1348,13 @@ function openDetail(id){
   if(t.csat){body+=`<div class="sec-title">Feedback</div><div class="comment-block" style="border-color:rgba(34,211,238,.3);background:var(--cyan-glow)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="color:var(--amber);font-size:15px">${'★'.repeat(t.csat)}${'☆'.repeat(5-t.csat)}</span><span style="font-size:12px;color:var(--tx2)">${t.csat}/5</span></div>${t.csatComment?`<p>${t.csatComment}</p>`:''}</div>`;}
   const isRequester=CU.name===t.requester;
   const needsFeedback=isRequester&&t.status==='resolved'&&!t.csat;
+  const userCanCancel=isRequester&&t.assignee==='Unassigned'&&!['resolved','closed','cancelled'].includes(t.status);
+  if(userCanCancel){body+=`
+    <div class="sec-title">Cancel this ticket</div>
+    <div class="action-panel">
+      <div style="font-size:12px;color:var(--tx2);margin-bottom:10px">This ticket hasn't been picked up by a technician yet, so you can cancel it if it's no longer needed.</div>
+      <button class="btn btn-sm btn-red" onclick="userCancelTicket('${t.id}')"><i class="ti ti-ban"></i> Cancel ticket</button>
+    </div>`;}
   if(needsFeedback){body+=`
     <div class="sec-title">Rate this resolution</div>
     <div class="action-panel">
@@ -1326,6 +1401,11 @@ function openDetail(id){
         <textarea id="d-res" placeholder="Describe how the issue was resolved..." style="width:100%;min-height:65px;padding:8px 10px;border-radius:var(--r);border:1px solid var(--line);background:var(--raised);color:var(--tx1);font-family:var(--font);font-size:13px"></textarea>
         <button class="btn btn-sm btn-green" style="margin-top:8px" onclick="doRes('${t.id}')"><i class="ti ti-check"></i> Mark as resolved</button>
       </div>
+      <div class="res-area" style="border-color:rgba(248,113,113,.25);background:var(--red-dim);margin-top:10px">
+        <label style="color:var(--red)">Cancel ticket <span style="color:var(--tx3);text-transform:none;font-size:11px;letter-spacing:0">(reason required)</span></label>
+        <textarea id="d-cancel-reason" placeholder="Reason for cancelling this ticket..." style="width:100%;min-height:55px;padding:8px 10px;border-radius:var(--r);border:1px solid var(--line);background:var(--raised);color:var(--tx1);font-family:var(--font);font-size:13px"></textarea>
+        <button class="btn btn-sm btn-red" style="margin-top:8px" onclick="techCancelTicket('${t.id}')"><i class="ti ti-ban"></i> Cancel ticket</button>
+      </div>
     </div>`;}
   document.getElementById('det-body').innerHTML=body;
   document.getElementById('det-foot').innerHTML=`<button class="btn btn-ghost" onclick="cm('modal-det')">Close</button>`;
@@ -1336,6 +1416,27 @@ async function doTrans(id){const t=TICKETS.find(x=>x.id===id);const to=document.
 async function doStat(id){const t=TICKETS.find(x=>x.id===id);t.status=document.getElementById('d-stat').value;const c={by:CU.name,time:nows(),text:`Status updated to "${t.status}".`};t.comments.push(c);await dbUpdateTicket(t);await dbInsertComment(id,c);reopen(id);}
 async function doCom(id){const t=TICKETS.find(x=>x.id===id);const txt=document.getElementById('d-com').value.trim();if(!txt)return;const c={by:CU.name,time:nows(),text:txt};t.comments.push(c);await dbInsertComment(id,c);reopen(id);}
 async function doRes(id){const t=TICKETS.find(x=>x.id===id);const res=document.getElementById('d-res').value.trim();if(!res){alert('Please enter a resolution note.');return;}t.status='resolved';t.resolution=res;const c={by:CU.name,time:nows(),text:'Resolved: '+res};t.comments.push(c);await dbUpdateTicket(t);await dbInsertComment(id,c);reopen(id);toast('Ticket resolved. Awaiting user feedback.');}
+
+// ── CANCEL TICKET ──────────────────────────────────────────────────────────────
+async function userCancelTicket(id){
+  const t=TICKETS.find(x=>x.id===id);
+  if(!confirm('Cancel this ticket? This cannot be undone.'))return;
+  t.status='cancelled';
+  const c={by:CU.name,time:nows(),text:'Ticket cancelled by requester (not yet assigned to a technician).'};
+  t.comments.push(c);
+  await dbUpdateTicket(t);await dbInsertComment(id,c);
+  reopen(id);toast('Ticket cancelled.');
+}
+async function techCancelTicket(id){
+  const t=TICKETS.find(x=>x.id===id);
+  const reason=document.getElementById('d-cancel-reason').value.trim();
+  if(!reason){alert('Please enter a reason for cancelling this ticket.');return;}
+  t.status='cancelled';
+  const c={by:CU.name,time:nows(),text:'Cancelled: '+reason};
+  t.comments.push(c);
+  await dbUpdateTicket(t);await dbInsertComment(id,c);
+  reopen(id);toast('Ticket cancelled.');
+}
 
 // ── CSAT FEEDBACK ─────────────────────────────────────────────────────────────
 let selectedCsat=0;
@@ -1369,7 +1470,7 @@ function sf(btn,scope,val){filt[scope]=val;btn.closest('.fbar').querySelectorAll
 // ── EXPORT CSV ────────────────────────────────────────────────────────────────
 function exportCSV(type){
   let rows,fn;
-  if(type==='tickets'){rows=[['ID','Subject','Category','Asset ID','Asset Name','Requester','Emp ID','Assignee','Priority','Status','SLA','Created'],...TICKETS.map(t=>[t.id,t.subject,t.category,t.assetTag,t.assetName,t.requester,t.requesterEmpId||'',t.assignee,t.priority,t.status,t.sla,t.created])];fn='tickets.csv';}
+  if(type==='tickets'){rows=[['ID','Subject','Type','Category','Asset ID','Asset Name','Requester','Emp ID','Assignee','Priority','Status','SLA','Created'],...TICKETS.map(t=>[t.id,t.subject,t.ticketType||'incident',t.category,t.assetTag,t.assetName,t.requester,t.requesterEmpId||'',t.assignee,t.priority,t.status,t.sla,t.created])];fn='tickets.csv';}
   else if(type==='assets'){rows=[['Asset ID','Name','Type','Assigned To','Emp ID','Status','Serial','Updated'],...ASSETS.map(a=>[a.tag,a.name,a.type,a.assignedTo,a.assignedEmpId||'',a.status,a.serial||'',a.updated])];fn='assets.csv';}
   else if(type==='approvals'){rows=[['ID','Title','Type','Urgency','Description'],...APPROVALS.map(a=>[a.id,a.title,a.type,a.urgency,a.desc])];fn='approvals.csv';}
   else{rows=[['Metric','Value'],['Tickets this month','186'],['CSAT','4.6'],['FCR','68%'],['Reopen rate','4.2%']];fn='analytics.csv';}
