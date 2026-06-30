@@ -501,6 +501,11 @@ tbody tr.rc:hover td{background:var(--raised);}
     <!-- Portal Access -->
     <div class="page-wrap" id="page-access">
       <div class="ph"><h2>Portal Access Management</h2><button class="btn btn-primary" onclick="openUserModal(null)"><i class="ti ti-user-plus"></i> Add user</button></div>
+      <div class="fbar">
+        <button class="fb on" onclick="sfAccess(this,'all')">All</button>
+        <button class="fb" onclick="sfAccess(this,'active')">Active</button>
+        <button class="fb" onclick="sfAccess(this,'inactive')">Inactive</button>
+      </div>
       <div class="card"><table>
         <thead><tr><th>Name</th><th>Emp ID</th><th>Username</th><th>Role</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody id="access-body"></tbody>
@@ -561,7 +566,7 @@ tbody tr.rc:hover td{background:var(--raised);}
     <div class="modal-body">
       <div class="fgrid">
         <div class="fg full"><label>Full name *</label><input type="text" id="um-name" placeholder="e.g. Rahul Sharma"></div>
-        <div class="fg"><label>Employee ID</label><input type="text" id="um-empid" class="ro" readonly placeholder="Auto-generated"></div>
+        <div class="fg"><label>Employee ID *</label><input type="text" id="um-empid" placeholder="e.g. EMP-0007"></div>
         <div class="fg"><label>Username *</label><input type="text" id="um-uname" placeholder="e.g. rahul.sharma"></div>
         <div class="fg"><label>Password *</label><input type="text" id="um-pass" placeholder="Set a password"></div>
         <div class="fg"><label>Role *</label>
@@ -572,6 +577,12 @@ tbody tr.rc:hover td{background:var(--raised);}
           </select>
         </div>
         <div class="fg"><label>Department</label><input type="text" id="um-dept" placeholder="e.g. Finance, IT, HR"></div>
+        <div class="fg"><label>Status</label>
+          <select id="um-active">
+            <option value="true">Active</option>
+            <option value="false">Inactive</option>
+          </select>
+        </div>
       </div>
     </div>
     <div class="modal-foot"><button class="btn btn-ghost" onclick="cm('modal-user')">Cancel</button><button class="btn btn-primary" id="um-save" onclick="saveUser()"><i class="ti ti-check"></i> Save user</button></div>
@@ -636,7 +647,7 @@ async function loadAllData(){
   TICKETS = t.map(x=>({
     id:x.id,subject:x.subject,category:x.category,requester:x.requester,requesterEmpId:x.requester_emp_id,
     assetTag:x.asset_tag,assetName:x.asset_name,assignee:x.assignee,priority:x.priority,status:x.status,
-    sla:x.sla,created:x.created,resolution:x.resolution||'',
+    sla:x.sla,created:x.created,resolution:x.resolution||'',csat:x.csat||0,csatComment:x.csat_comment||'',
     comments:c.filter(cm=>cm.ticket_id===x.id).map(cm=>({by:cm.by_user,time:cm.time,text:cm.text}))
   }));
   const nums = TICKETS.map(x=>parseInt((x.id||'TKT-0').split('-')[1]||0));
@@ -669,7 +680,7 @@ async function dbInsertTicket(t){
   if(error)console.error('dbInsertTicket',error);
 }
 async function dbUpdateTicket(t){
-  const {error}=await dbc.from('tickets').update({assignee:t.assignee,priority:t.priority,status:t.status,sla:t.sla,resolution:t.resolution}).eq('id',t.id);
+  const {error}=await dbc.from('tickets').update({assignee:t.assignee,priority:t.priority,status:t.status,sla:t.sla,resolution:t.resolution,csat:t.csat||null,csat_comment:t.csatComment||null}).eq('id',t.id);
   if(error)console.error('dbUpdateTicket',error);
 }
 async function dbInsertComment(ticketId,c){
@@ -958,11 +969,21 @@ async function saveAsset(){
 function renderKB(el){document.getElementById(el).innerHTML=KB.map(k=>`<div class="kb-card"><div class="kb-cat">${k.cat}</div><h4>${k.title}</h4><p>${k.body}</p></div>`).join('');}
 
 // ── PORTAL ACCESS ─────────────────────────────────────────────────────────────
+let accessFilter='all';
+function sfAccess(btn,val){
+  accessFilter=val;
+  btn.closest('.fbar').querySelectorAll('.fb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderAccess();
+}
 function renderAccess(){
   const accColors=['#22D3EE','#34D399','#FBBF24','#A78BFA','#F87171','#60A5FA'];
   const rBdg={user:'b-user',tech:'b-tech',admin:'b-admin'};
   const rLbl={user:'User',tech:'Technician',admin:'Admin'};
-  document.getElementById('access-body').innerHTML=USERS.map(u=>{
+  let list=[...USERS];
+  if(accessFilter==='active')list=list.filter(u=>u.active);
+  if(accessFilter==='inactive')list=list.filter(u=>!u.active);
+  document.getElementById('access-body').innerHTML=list.length?list.map(u=>{
     const ini=u.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
     const col=accColors[u.id%accColors.length];
     return`<tr>
@@ -977,7 +998,7 @@ function renderAccess(){
         <button class="btn btn-sm ${u.active?'btn-red':'btn-green'}" onclick="toggleUser(${u.id})">${u.active?'<i class="ti ti-user-off"></i> Disable':'<i class="ti ti-user-check"></i> Enable'}</button>
       </div></td>
     </tr>`;
-  }).join('');
+  }).join(''):`<tr><td colspan="7"><div class="empty"><i class="ti ti-users"></i><p>No ${accessFilter==='all'?'':accessFilter+' '}users found.</p></div></td></tr>`;
 }
 function openUserModal(id){
   editUserId=id;
@@ -991,31 +1012,36 @@ function openUserModal(id){
     document.getElementById('um-pass').value=u.password;
     document.getElementById('um-role').value=u.role;
     document.getElementById('um-dept').value=u.dept||'';
+    document.getElementById('um-active').value=u.active?'true':'false';
   }else{
-    ['um-name','um-uname','um-pass','um-dept'].forEach(f=>document.getElementById(f).value='');
-    const newEmpId='EMP-'+String(nextEmpNum).padStart(4,'0');
-    document.getElementById('um-empid').value=newEmpId;
+    ['um-name','um-empid','um-uname','um-pass','um-dept'].forEach(f=>document.getElementById(f).value='');
     document.getElementById('um-role').value='user';
+    document.getElementById('um-active').value='true';
   }
   document.getElementById('modal-user').classList.add('open');
 }
 async function saveUser(){
   const name=document.getElementById('um-name').value.trim();
+  const empId=document.getElementById('um-empid').value.trim();
   const uname=document.getElementById('um-uname').value.trim();
   const pass=document.getElementById('um-pass').value.trim();
-  if(!name||!uname||!pass){alert('Name, username and password are required.');return;}
+  const active=document.getElementById('um-active').value==='true';
+  if(!name||!empId||!uname||!pass){alert('Name, Employee ID, username and password are required.');return;}
+  const dupEmp=USERS.find(x=>x.empId.toLowerCase()===empId.toLowerCase()&&x.id!==editUserId);
+  if(dupEmp){alert('That Employee ID is already in use by '+dupEmp.name+'.');return;}
+  const dupUser=USERS.find(x=>x.username.toLowerCase()===uname.toLowerCase()&&x.id!==editUserId);
+  if(dupUser){alert('That username is already taken.');return;}
   if(editUserId){
     const u=USERS.find(x=>x.id===editUserId);
-    u.name=name;u.username=uname;u.password=pass;
+    u.name=name;u.empId=empId;u.username=uname;u.password=pass;
     u.role=document.getElementById('um-role').value;
     u.dept=document.getElementById('um-dept').value;
+    u.active=active;
     await dbUpdateUser(u);
     toast('User updated.');
   }else{
-    const empId='EMP-'+String(nextEmpNum).padStart(4,'0');
-    const newUser={id:nextUserId++,empId,name,username:uname,password:pass,role:document.getElementById('um-role').value,dept:document.getElementById('um-dept').value,active:true};
+    const newUser={id:nextUserId++,empId,name,username:uname,password:pass,role:document.getElementById('um-role').value,dept:document.getElementById('um-dept').value,active};
     USERS.push(newUser);
-    nextEmpNum++;
     await dbInsertUser(newUser);
     toast('User added. They can now sign in.');
   }
@@ -1129,6 +1155,24 @@ function openDetail(id){
     body+=t.comments.map(c=>`<div class="comment-block"><div class="cm">${c.by} · ${c.time}</div><p>${c.text}</p></div>`).join('');
   }
   if(t.resolution){body+=`<div class="sec-title">Resolution</div><div class="comment-block" style="border-color:rgba(52,211,153,.3);background:var(--green-dim)"><p>${t.resolution}</p></div>`;}
+  if(t.csat){body+=`<div class="sec-title">Feedback</div><div class="comment-block" style="border-color:rgba(34,211,238,.3);background:var(--cyan-glow)"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="color:var(--amber);font-size:15px">${'★'.repeat(t.csat)}${'☆'.repeat(5-t.csat)}</span><span style="font-size:12px;color:var(--tx2)">${t.csat}/5</span></div>${t.csatComment?`<p>${t.csatComment}</p>`:''}</div>`;}
+  const isRequester=CU.name===t.requester;
+  const needsFeedback=isRequester&&t.status==='resolved'&&!t.csat;
+  if(needsFeedback){body+=`
+    <div class="sec-title">Rate this resolution</div>
+    <div class="action-panel">
+      <div style="margin-bottom:12px">
+        <label style="font-size:10px;font-weight:500;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:8px">How satisfied are you with how this was resolved?</label>
+        <div id="csat-stars" style="display:flex;gap:6px;font-size:26px;cursor:pointer;">
+          ${[1,2,3,4,5].map(n=>`<span class="csat-star" data-val="${n}" onclick="setCsat(${n})" style="color:var(--line);transition:color .12s">★</span>`).join('')}
+        </div>
+      </div>
+      <div>
+        <label style="font-size:10px;font-weight:500;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:6px">Comments (optional)</label>
+        <textarea id="csat-comment" placeholder="Tell us more about your experience..." style="width:100%;min-height:60px;padding:8px 10px;border-radius:var(--r);border:1px solid var(--line);background:var(--raised);color:var(--tx1);font-family:var(--font);font-size:13px"></textarea>
+      </div>
+      <button class="btn btn-sm btn-primary" style="margin-top:10px" onclick="submitFeedback('${t.id}')"><i class="ti ti-send"></i> Submit feedback &amp; close ticket</button>
+    </div>`;}
   if(canEdit){body+=`
     <div class="sec-title">Technician actions</div>
     <div class="action-panel">
@@ -1169,7 +1213,32 @@ async function doAss(id){const t=TICKETS.find(x=>x.id===id);t.assignee=document.
 async function doTrans(id){const t=TICKETS.find(x=>x.id===id);const to=document.getElementById('d-trans').value;const c={by:CU.name,time:nows(),text:`Transferred to ${to}.`};t.comments.push(c);t.assignee=to;await dbUpdateTicket(t);await dbInsertComment(id,c);reopen(id);}
 async function doStat(id){const t=TICKETS.find(x=>x.id===id);t.status=document.getElementById('d-stat').value;const c={by:CU.name,time:nows(),text:`Status updated to "${t.status}".`};t.comments.push(c);await dbUpdateTicket(t);await dbInsertComment(id,c);reopen(id);}
 async function doCom(id){const t=TICKETS.find(x=>x.id===id);const txt=document.getElementById('d-com').value.trim();if(!txt)return;const c={by:CU.name,time:nows(),text:txt};t.comments.push(c);await dbInsertComment(id,c);reopen(id);}
-async function doRes(id){const t=TICKETS.find(x=>x.id===id);const res=document.getElementById('d-res').value.trim();if(!res){alert('Please enter a resolution note.');return;}t.status='resolved';t.resolution=res;const c={by:CU.name,time:nows(),text:'Resolved: '+res};t.comments.push(c);await dbUpdateTicket(t);await dbInsertComment(id,c);reopen(id);toast('Ticket resolved.');}
+async function doRes(id){const t=TICKETS.find(x=>x.id===id);const res=document.getElementById('d-res').value.trim();if(!res){alert('Please enter a resolution note.');return;}t.status='resolved';t.resolution=res;const c={by:CU.name,time:nows(),text:'Resolved: '+res};t.comments.push(c);await dbUpdateTicket(t);await dbInsertComment(id,c);reopen(id);toast('Ticket resolved. Awaiting user feedback.');}
+
+// ── CSAT FEEDBACK ─────────────────────────────────────────────────────────────
+let selectedCsat=0;
+function setCsat(n){
+  selectedCsat=n;
+  document.querySelectorAll('.csat-star').forEach(s=>{
+    const v=parseInt(s.dataset.val);
+    s.style.color = v<=n ? 'var(--amber)' : 'var(--line)';
+  });
+}
+async function submitFeedback(id){
+  if(!selectedCsat){alert('Please select a star rating before submitting.');return;}
+  const t=TICKETS.find(x=>x.id===id);
+  const comment=document.getElementById('csat-comment').value.trim();
+  t.csat=selectedCsat;
+  t.csatComment=comment;
+  t.status='closed';
+  const c={by:CU.name,time:nows(),text:`Submitted feedback (${selectedCsat}/5)${comment?': '+comment:''}. Ticket closed.`};
+  t.comments.push(c);
+  await dbUpdateTicket(t);
+  await dbInsertComment(id,c);
+  selectedCsat=0;
+  reopen(id);
+  toast('Thanks for your feedback — ticket closed.');
+}
 function reopen(id){refreshBadges();if(curPage==='all-tickets')renderAllTickets();if(curPage==='my-tickets')renderMyTickets();if(curPage==='dashboard')renderDashboard();cm('modal-det');setTimeout(()=>openDetail(id),80);}
 
 // ── FILTERS ───────────────────────────────────────────────────────────────────
