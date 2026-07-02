@@ -390,6 +390,15 @@ tbody tr.rc:hover td{background:#EFF6FF;}
 .user-row-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
 #toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;padding:11px 20px;border-radius:var(--r);font-size:13px;font-weight:600;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;box-shadow:0 4px 20px rgba(11,45,94,.3);animation:slideIn .3s ease;}
 #toast.show{opacity:1;}
+/* KB article content */
+.kb-article-body h4{font-size:14px;font-weight:700;color:var(--navy);margin:16px 0 8px;}
+.kb-article-body h4:first-child{margin-top:0;}
+.kb-article-body p{font-size:13px;color:var(--tx1);line-height:1.7;margin-bottom:10px;}
+.kb-article-body ol,.kb-article-body ul{font-size:13px;color:var(--tx1);line-height:1.8;padding-left:20px;margin-bottom:12px;}
+.kb-article-body li{margin-bottom:4px;}
+.kb-article-body strong{font-weight:600;color:var(--navy);}
+.kb-article-body code{font-family:var(--mono);font-size:12px;background:var(--surface2);border:1px solid var(--border);padding:1px 6px;border-radius:4px;color:var(--teal);}
+.kb-article-body em{color:var(--sky);font-style:normal;font-weight:500;}
 </style>
 </head>
 <body>
@@ -569,6 +578,11 @@ tbody tr.rc:hover td{background:#EFF6FF;}
     <!-- USER: KB -->
     <div class="page-wrap" id="page-kb-user">
       <div class="ph"><h2>Knowledge Base</h2></div>
+      <div style="margin-bottom:16px;position:relative;">
+        <i class="ti ti-search" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--tx3);font-size:16px;"></i>
+        <input id="kb-search-u" type="text" placeholder="Search articles, topics, keywords..." oninput="renderKB('kb-u')"
+          style="width:100%;max-width:480px;padding:10px 16px 10px 42px;border-radius:50px;border:1.5px solid var(--border);background:var(--surface);font-size:13px;color:var(--tx1);">
+      </div>
       <div class="kb-grid" id="kb-u"></div>
     </div>
 
@@ -702,6 +716,11 @@ tbody tr.rc:hover td{background:#EFF6FF;}
     <!-- KB Admin -->
     <div class="page-wrap" id="page-kb-admin">
       <div class="ph"><h2>Knowledge Base</h2></div>
+      <div style="margin-bottom:16px;position:relative;">
+        <i class="ti ti-search" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--tx3);font-size:16px;"></i>
+        <input id="kb-search-a" type="text" placeholder="Search articles, topics, keywords..." oninput="renderKB('kb-a')"
+          style="width:100%;max-width:480px;padding:10px 16px 10px 42px;border-radius:50px;border:1.5px solid var(--border);background:var(--surface);font-size:13px;color:var(--tx1);">
+      </div>
       <div class="kb-grid" id="kb-a"></div>
     </div>
 
@@ -830,6 +849,55 @@ tbody tr.rc:hover td{background:#EFF6FF;}
   </div>
 </div>
 
+<!-- ── MODAL: KB Article ───────────────────────────────────────────────────── -->
+<div class="overlay" id="modal-kb">
+  <div class="modal wide">
+    <div class="modal-head">
+      <div>
+        <div id="kb-modal-cat" style="font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;"></div>
+        <h3 id="kb-modal-title">Article</h3>
+      </div>
+      <button class="btn btn-sm btn-ghost" onclick="cm('modal-kb')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body" id="kb-modal-body"></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="cm('modal-kb')">Close</button>
+      <button class="btn btn-primary" onclick="openNewTicket();cm('modal-kb');"><i class="ti ti-ticket"></i> Raise a ticket</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: KB Article ──────────────────────────────────────────────────────── -->
+<div class="overlay" id="modal-kb">
+  <div class="modal wide">
+    <div class="modal-head">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div id="kb-modal-icon" style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--teal),var(--sky));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <i class="ti ti-books" style="color:#fff;font-size:18px;"></i>
+        </div>
+        <div>
+          <div id="kb-modal-cat" style="font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.1em;margin-bottom:2px;"></div>
+          <h3 id="kb-modal-title">Article</h3>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-ghost" onclick="cm('modal-kb')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div id="kb-modal-tags" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;"></div>
+      <div id="kb-modal-body" class="kb-article-body"></div>
+      <div style="margin-top:20px;padding:14px 16px;background:var(--surface2);border-radius:var(--r);border:1px solid var(--border);">
+        <div style="font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:6px;"><i class="ti ti-bulb" style="color:var(--teal);margin-right:5px;"></i>Still need help?</div>
+        <div style="font-size:12px;color:var(--tx2);">If this article didn't resolve your issue, raise a support ticket and a technician will assist you.</div>
+        <button class="btn btn-primary btn-sm" style="margin-top:10px;" onclick="cm('modal-kb');openNewTicket()"><i class="ti ti-plus"></i> Raise a ticket</button>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <div style="flex:1;font-size:11px;color:var(--tx3);">Knowledge Base Article</div>
+      <button class="btn btn-ghost" onclick="cm('modal-kb')">Close</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -919,13 +987,180 @@ async function dbInsertApproval(a){
 }
 
 const KB=[
-  {cat:'Network',title:'VPN setup guide for remote users',body:'Step-by-step instructions to configure and troubleshoot VPN access on Windows and macOS.'},
-  {cat:'Email',title:'Fix Outlook sync issues',body:'Common causes and resolutions for Outlook not syncing, including calendar and contact issues.'},
-  {cat:'Hardware',title:'Laptop request & provisioning',body:'How to raise a hardware request, the approval workflow, and expected delivery timelines.'},
-  {cat:'Access',title:'Password reset and account unlock',body:'Self-service steps for resetting Active Directory passwords and unlocking accounts.'},
-  {cat:'Software',title:'Installing software via Software Center',body:'Install pre-approved applications without requiring admin rights.'},
-  {cat:'Security',title:'Responding to a phishing email',body:'Steps to identify, report and contain a suspected phishing threat in your inbox.'},
+  {
+    cat:'Network', icon:'ti-network', tags:['vpn','remote','wifi','connection'],
+    title:'VPN setup guide for remote users',
+    summary:'Configure and troubleshoot VPN access on Windows and macOS.',
+    content:`<h4>Overview</h4><p>This guide helps you set up and troubleshoot the company VPN on Windows and macOS. VPN access is required for all remote work involving internal systems.</p>
+    <h4>Windows — Installation steps</h4>
+    <ol>
+      <li>Download the VPN client from the IT portal under <strong>Downloads → VPN Client</strong>.</li>
+      <li>Run the installer as Administrator and follow on-screen prompts.</li>
+      <li>Open the VPN client and enter the server address provided by IT: <code>vpn.company.com</code></li>
+      <li>Log in using your corporate email and password.</li>
+      <li>Click <strong>Connect</strong>. A green tick confirms successful connection.</li>
+    </ol>
+    <h4>macOS — Installation steps</h4>
+    <ol>
+      <li>Go to <strong>System Settings → VPN → Add VPN Configuration</strong>.</li>
+      <li>Select <strong>IKEv2</strong> as the type.</li>
+      <li>Enter server: <code>vpn.company.com</code>, remote ID: <code>vpn.company.com</code>.</li>
+      <li>Enter your corporate credentials and click <strong>Connect</strong>.</li>
+    </ol>
+    <h4>Common issues</h4>
+    <ul>
+      <li><strong>Connection timeout:</strong> Check your internet connection and try again. Disable any third-party firewalls temporarily.</li>
+      <li><strong>Authentication failed:</strong> Ensure your password hasn't expired. Reset via the self-service portal.</li>
+      <li><strong>Slow speeds on VPN:</strong> Try switching to the nearest server region in VPN settings.</li>
+    </ul>
+    <h4>Still stuck?</h4><p>Raise an Incident ticket with the category <strong>Network</strong> and attach a screenshot of the error message.</p>`
+  },
+  {
+    cat:'Email', icon:'ti-mail', tags:['outlook','email','calendar','sync'],
+    title:'Fix Outlook sync issues',
+    summary:'Resolve Outlook not syncing emails, calendar, or contacts.',
+    content:`<h4>Overview</h4><p>Outlook sync issues are often caused by a corrupted OST file, outdated client, or account configuration problems. Follow these steps to resolve.</p>
+    <h4>Step 1 — Check your connection</h4>
+    <ol>
+      <li>Look at the bottom status bar in Outlook — it should say <strong>Connected to Microsoft Exchange</strong>.</li>
+      <li>If it says <strong>Disconnected</strong> or <strong>Working Offline</strong>, click <strong>Send/Receive → Work Offline</strong> to toggle it off.</li>
+    </ol>
+    <h4>Step 2 — Repair your Outlook profile</h4>
+    <ol>
+      <li>Close Outlook completely.</li>
+      <li>Open <strong>Control Panel → Mail → Email Accounts → Data Files</strong>.</li>
+      <li>Note the path of your .ost file, then delete it.</li>
+      <li>Reopen Outlook — it will rebuild the OST file automatically (may take 5–15 minutes).</li>
+    </ol>
+    <h4>Step 3 — Update Outlook</h4>
+    <ol>
+      <li>In Outlook: <strong>File → Office Account → Update Options → Update Now</strong>.</li>
+      <li>Restart Outlook after the update completes.</li>
+    </ol>
+    <h4>Calendar not syncing?</h4>
+    <ul>
+      <li>Right-click your Calendar folder → <strong>Properties → Synchronization</strong> and check the last sync time.</li>
+      <li>Force a manual sync: <strong>Send/Receive → Send/Receive All Folders (F9)</strong>.</li>
+    </ul>
+    <h4>Still not working?</h4><p>Raise an Incident ticket with category <strong>Email</strong>. Include your Outlook version (File → Office Account) and any error codes shown.</p>`
+  },
+  {
+    cat:'Hardware', icon:'ti-device-laptop', tags:['laptop','hardware','request','new device'],
+    title:'Laptop request & provisioning',
+    summary:'How to request a new laptop and understand the provisioning timeline.',
+    content:`<h4>Overview</h4><p>All hardware requests go through an approval workflow before provisioning begins. Standard laptops are provisioned within 5–7 business days.</p>
+    <h4>How to raise a hardware request</h4>
+    <ol>
+      <li>Log into this portal and click <strong>Raise ticket</strong>.</li>
+      <li>Select ticket type: <strong>Hardware Request</strong>.</li>
+      <li>In the subject, specify what you need, e.g. <em>"New laptop — Dell Latitude 7440"</em>.</li>
+      <li>In the description, include your department, manager's name, and business justification.</li>
+      <li>Submit — the ticket enters <strong>Pending Approval</strong> status automatically.</li>
+    </ol>
+    <h4>Approval workflow</h4>
+    <ul>
+      <li>Your request appears in the <strong>Approvals</strong> tab for your manager/admin.</li>
+      <li>Once approved, status changes to <strong>Open</strong> and a technician is assigned.</li>
+      <li>If rejected, you will see the reason in the ticket's activity log.</li>
+    </ul>
+    <h4>Standard provisioning timelines</h4>
+    <ul>
+      <li>Laptop (stock available): 2–3 business days</li>
+      <li>Laptop (order required): 7–10 business days</li>
+      <li>Mobile device: 3–5 business days</li>
+      <li>Peripheral (mouse, keyboard, monitor): 1–2 business days</li>
+    </ul>
+    <h4>New joiner provisioning</h4><p>For new joiners, hardware requests should be raised at least 5 business days before the joining date to ensure day-one readiness.</p>`
+  },
+  {
+    cat:'Access', icon:'ti-key', tags:['password','reset','account','unlock','active directory'],
+    title:'Password reset and account unlock',
+    summary:'Self-service steps to reset your password or unlock your AD account.',
+    content:`<h4>Overview</h4><p>Your Active Directory (AD) password is used to log into your computer, email, VPN, and all corporate systems. Password resets and account unlocks can be done without raising a ticket if you follow these steps.</p>
+    <h4>Self-service password reset</h4>
+    <ol>
+      <li>Go to the self-service password portal: <code>https://passwordreset.company.com</code></li>
+      <li>Enter your corporate email address and complete identity verification.</li>
+      <li>Choose <strong>Reset my password</strong> and set a new one meeting the requirements below.</li>
+      <li>Sign into your computer using the new password.</li>
+    </ol>
+    <h4>Password requirements</h4>
+    <ul>
+      <li>Minimum 12 characters</li>
+      <li>At least 1 uppercase letter, 1 lowercase letter, 1 number, 1 special character</li>
+      <li>Cannot reuse the last 5 passwords</li>
+      <li>Expires every 90 days</li>
+    </ul>
+    <h4>Account locked out?</h4>
+    <ol>
+      <li>Wait 15 minutes — accounts auto-unlock after 3 failed attempts.</li>
+      <li>Or use the self-service portal above to unlock immediately.</li>
+      <li>If the portal itself is inaccessible, raise an <strong>Incident</strong> ticket with category <strong>Access / Permissions</strong>.</li>
+    </ol>
+    <h4>Cannot access a specific system?</h4><p>If you can log into Windows but not a specific application or SharePoint site, raise an <strong>Access / Permissions</strong> ticket specifying the system name and the access level you need.</p>`
+  },
+  {
+    cat:'Software', icon:'ti-apps', tags:['software','install','application','license'],
+    title:'Installing software via Software Center',
+    summary:'Install pre-approved applications without needing admin rights.',
+    content:`<h4>Overview</h4><p>The Software Center contains all IT-approved applications that you can install yourself without needing admin rights or raising a ticket.</p>
+    <h4>How to open Software Center</h4>
+    <ol>
+      <li>Click the <strong>Start menu</strong> and search for <strong>Software Center</strong>.</li>
+      <li>Or navigate to: <strong>Start → Microsoft Endpoint Manager → Software Center</strong>.</li>
+    </ol>
+    <h4>Installing an application</h4>
+    <ol>
+      <li>In Software Center, browse or search for the application you need.</li>
+      <li>Click the application tile, then click <strong>Install</strong>.</li>
+      <li>Installation runs in the background — you can continue working.</li>
+      <li>You'll receive a notification when complete. Some apps require a restart.</li>
+    </ol>
+    <h4>Application not in Software Center?</h4>
+    <ul>
+      <li>Raise a <strong>Software Request</strong> ticket from this portal.</li>
+      <li>Include the application name, version, and business justification.</li>
+      <li>The request goes through an approval workflow before IT procures and deploys it.</li>
+    </ul>
+    <h4>License requests</h4><p>If you need a licensed product (e.g. Adobe, AutoCAD, specialist tools), raise a <strong>Software Request</strong> ticket. IT will check available license seats before purchasing new ones.</p>`
+  },
+  {
+    cat:'Security', icon:'ti-shield-lock', tags:['phishing','security','email','threat','spam'],
+    title:'Responding to a phishing email',
+    summary:'How to identify, report, and contain a phishing threat.',
+    content:`<h4>What is phishing?</h4><p>Phishing is a type of cyber attack where criminals send fake emails pretending to be legitimate organisations to steal your credentials or install malware.</p>
+    <h4>How to identify a phishing email</h4>
+    <ul>
+      <li>Sender email address doesn't match the company it claims to be from.</li>
+      <li>Urgent or threatening language: "Your account will be suspended in 24 hours".</li>
+      <li>Suspicious links — hover over them (don't click) to see where they actually go.</li>
+      <li>Unexpected attachments, especially .exe, .zip, .doc files.</li>
+      <li>Generic greetings like "Dear Customer" instead of your name.</li>
+    </ul>
+    <h4>What to do if you receive a phishing email</h4>
+    <ol>
+      <li><strong>Do not click</strong> any links or open attachments.</li>
+      <li>Do not reply to the email or forward it to colleagues.</li>
+      <li>Click <strong>Report Phishing</strong> in Outlook (the fish-hook icon in the ribbon).</li>
+      <li>Raise a <strong>Security</strong> ticket on this portal immediately, including the sender address and a screenshot.</li>
+      <li>If you clicked a link or entered credentials, notify IT immediately — this is urgent.</li>
+    </ol>
+    <h4>Already clicked the link?</h4>
+    <ol>
+      <li>Disconnect your device from the network immediately (unplug network cable / turn off Wi-Fi).</li>
+      <li>Call the IT security hotline: <strong>+91-XXXX-XXXXXX</strong>.</li>
+      <li>Raise a <strong>Critical Incident</strong> ticket marked <strong>Security</strong>.</li>
+      <li>Do not attempt to "fix" the issue yourself — wait for IT guidance.</li>
+    </ol>
+    <h4>Prevention tips</h4>
+    <ul>
+      <li>Enable multi-factor authentication (MFA) on all corporate accounts.</li>
+      <li>Never use corporate credentials on personal devices or websites.</li>
+      <li>Complete the mandatory security awareness training each quarter.</li>
+    </ul>`
+  },
 ];
+
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let CU=null; // current user
@@ -1245,7 +1480,44 @@ async function saveAsset(){
 }
 
 // ── KB ────────────────────────────────────────────────────────────────────────
-function renderKB(el){document.getElementById(el).innerHTML=KB.map(k=>`<div class="kb-card"><div class="kb-cat">${k.cat}</div><h4>${k.title}</h4><p>${k.body}</p></div>`).join('');}
+function renderKB(el){
+  const searchId = el==='kb-u' ? 'kb-search-u' : 'kb-search-a';
+  const q = (document.getElementById(searchId)||{}).value||'';
+  const lower = q.toLowerCase();
+  const list = q ? KB.filter(k=>k.title.toLowerCase().includes(lower)||k.cat.toLowerCase().includes(lower)||(k.tags||[]).some(t=>t.includes(lower))||k.summary.toLowerCase().includes(lower)) : KB;
+  document.getElementById(el).innerHTML = list.length
+    ? list.map((k,i)=>`
+      <div class="kb-card" onclick="openKB(${KB.indexOf(k)})" style="animation:popIn ${0.1+i*0.05}s ease both;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,var(--teal),var(--sky));display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="ti ${k.icon||'ti-books'}" style="color:#fff;font-size:14px;"></i>
+          </div>
+          <div class="kb-cat">${k.cat}</div>
+        </div>
+        <h4>${k.title}</h4>
+        <p>${k.summary}</p>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:10px;">
+          ${(k.tags||[]).slice(0,3).map(t=>`<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--surface2);color:var(--tx3);border:1px solid var(--border);">${t}</span>`).join('')}
+        </div>
+        <div style="margin-top:12px;font-size:11px;color:var(--teal);font-weight:600;display:flex;align-items:center;gap:4px;">
+          Read article <i class="ti ti-arrow-right" style="font-size:12px;"></i>
+        </div>
+      </div>`).join('')
+    : `<div class="empty" style="grid-column:1/-1;"><i class="ti ti-search" style="font-size:32px;display:block;margin-bottom:8px;color:var(--border2);"></i><p>No articles match "<strong>${q}</strong>"</p></div>`;
+}
+
+function openKB(idx){
+  const k = KB[idx];
+  if(!k) return;
+  document.getElementById('kb-modal-cat').textContent = k.cat;
+  document.getElementById('kb-modal-title').textContent = k.title;
+  const iconEl = document.querySelector('#kb-modal-icon .ti');
+  if(iconEl) iconEl.className = `ti ${k.icon||'ti-books'}`;
+  document.getElementById('kb-modal-tags').innerHTML = (k.tags||[]).map(t=>
+    `<span style="font-size:11px;padding:3px 9px;border-radius:10px;background:var(--surface2);color:var(--tx2);border:1px solid var(--border);font-weight:500;">${t}</span>`).join('');
+  document.getElementById('kb-modal-body').innerHTML = k.content||'';
+  document.getElementById('modal-kb').classList.add('open');
+}
 
 // ── PORTAL ACCESS ─────────────────────────────────────────────────────────────
 let accessFilter='all';
