@@ -705,6 +705,43 @@ tbody tr.rc:hover td { background: #EEF4FF; }
   background: var(--s1); border: 1px solid var(--b1); border-radius: var(--r);
 }
 .lr-secure .ti { color: var(--accent); font-size: 13px; }
+
+/* ── Location cards ──────────────────────────────────────────────────────────── */
+.loc-card {
+  background: var(--s0);
+  border: 1px solid var(--b1);
+  border-radius: var(--rl);
+  padding: 18px;
+  cursor: default;
+  box-shadow: var(--sh);
+  transition: box-shadow .2s, transform .15s;
+  position: relative;
+  overflow: hidden;
+}
+.loc-card:hover { box-shadow: var(--sh-md); transform: translateY(-1px); }
+.loc-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--loc-color, var(--primary));
+}
+.loc-type-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 12px;
+  font-size: 20px;
+}
+.loc-name { font-size: 14px; font-weight: 700; color: var(--tx1); margin-bottom: 3px; }
+.loc-city { font-size: 12px; color: var(--tx2); margin-bottom: 12px; display: flex; align-items: center; gap: 4px; }
+.loc-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; margin-bottom: 12px; }
+.loc-meta-item .lk { font-size: 10px; font-weight: 600; color: var(--tx3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 2px; }
+.loc-meta-item .lv { font-size: 12px; color: var(--tx1); font-weight: 500; }
+.loc-footer { padding-top: 10px; border-top: 1px solid var(--b1); display: flex; align-items: center; justify-content: space-between; }
+.loc-status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+.b-loc-office     { background: var(--primary); }
+.b-loc-datacenter { background: var(--accent); }
+.b-loc-remote     { background: var(--amber); }
+.b-loc-inactive   { background: var(--tx3); }
+.b-loc-construction { background: var(--purple); }
 </style>
 </head>
 <body>
@@ -1067,13 +1104,56 @@ tbody tr.rc:hover td { background: #EEF4FF; }
         <button class="fb" onclick="sfAccess(this,'inactive')">Inactive</button>
       </div>
       <div class="card"><table>
-        <thead><tr><th>Name</th><th>Emp ID</th><th>Email</th><th>Username</th><th>Role</th><th>Department</th><th>Status</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Name</th><th>Emp ID</th><th>Email</th><th>Username</th><th>Role</th><th>Department</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody id="access-body"></tbody>
       </table></div>
     </div>
   </div>
 </div>
 
+    <!-- ALL ROLES: Location -->
+    <div class="page-wrap" id="page-location">
+      <div class="ph">
+        <div>
+          <h2>Office Locations</h2>
+          <div style="font-size:12px;color:var(--tx3);margin-top:2px;">View all company offices, data centres, and remote sites</div>
+        </div>
+      </div>
+      <!-- Location stats -->
+      <div class="stats" id="loc-stats" style="grid-template-columns:repeat(3,1fr);"></div>
+      <!-- Filter bar -->
+      <div class="fbar">
+        <button class="fb on" onclick="sfLoc(this,'all')">All</button>
+        <button class="fb" onclick="sfLoc(this,'office')">Office</button>
+        <button class="fb" onclick="sfLoc(this,'datacenter')">Data Centre</button>
+        <button class="fb" onclick="sfLoc(this,'remote')">Remote Site</button>
+        <div class="sw" style="margin-left:auto;">
+          <i class="ti ti-search"></i>
+          <input type="text" placeholder="Search locations..." oninput="filterLocations(this.value)">
+        </div>
+      </div>
+      <!-- Location cards grid -->
+      <div id="loc-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;"></div>
+    </div>
+
+    <!-- ADMIN ONLY: Manage Locations -->
+    <div class="page-wrap" id="page-manage-locations">
+      <div class="ph">
+        <div>
+          <h2>Manage Locations</h2>
+          <div style="font-size:12px;color:var(--tx3);margin-top:2px;">Add, edit, and deactivate office locations</div>
+        </div>
+        <button class="btn btn-primary" onclick="openLocationModal(null)"><i class="ti ti-map-pin-plus"></i> Add location</button>
+      </div>
+      <div class="card">
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Type</th><th>City</th><th>Country</th><th>Head count</th><th>IT contact</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="manage-loc-body"></tbody>
+        </table>
+      </div>
+    </div>
 <!-- ── MODAL: New Ticket ───────────────────────────────────────────────────── -->
 <div class="overlay" id="modal-new">
   <div class="modal">
@@ -1152,6 +1232,11 @@ tbody tr.rc:hover td { background: #EEF4FF; }
           </select>
         </div>
         <div class="fg"><label>Department</label><input type="text" id="um-dept" placeholder="e.g. Finance, IT, HR"></div>
+        <div class="fg"><label>Location</label>
+          <select id="um-location">
+            <option value="">— Select location —</option>
+          </select>
+        </div>
         <div class="fg"><label>Status</label>
           <select id="um-active">
             <option value="true">Active</option>
@@ -1161,6 +1246,50 @@ tbody tr.rc:hover td { background: #EEF4FF; }
       </div>
     </div>
     <div class="modal-foot"><button class="btn btn-ghost" onclick="cm('modal-user')">Cancel</button><button class="btn btn-primary" id="um-save" onclick="saveUser()"><i class="ti ti-check"></i> Save user</button></div>
+  </div>
+</div>
+
+
+<!-- ── MODAL: Add/Edit Location ──────────────────────────────────────────────── -->
+<div class="overlay" id="modal-location">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="loc-modal-title">Add location</h3>
+      <button class="btn btn-sm btn-ghost" onclick="cm('modal-location')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="fgrid">
+        <div class="fg full"><label>Location name *</label><input type="text" id="lm-name" placeholder="e.g. Chennai Head Office"></div>
+        <div class="fg"><label>Type *</label>
+          <select id="lm-type">
+            <option value="office">Office</option>
+            <option value="datacenter">Data Centre</option>
+            <option value="remote">Remote Site</option>
+          </select>
+        </div>
+        <div class="fg"><label>City *</label><input type="text" id="lm-city" placeholder="e.g. Chennai"></div>
+        <div class="fg"><label>State / Province</label><input type="text" id="lm-state" placeholder="e.g. Tamil Nadu"></div>
+        <div class="fg"><label>Country *</label><input type="text" id="lm-country" placeholder="e.g. India"></div>
+        <div class="fg"><label>Postal / ZIP code</label><input type="text" id="lm-zip" placeholder="e.g. 600001"></div>
+        <div class="fg full"><label>Address</label><input type="text" id="lm-address" placeholder="e.g. No. 42, Anna Salai, Teynampet"></div>
+        <div class="fg"><label>Head count</label><input type="number" id="lm-headcount" placeholder="e.g. 120" min="0"></div>
+        <div class="fg"><label>IT contact name</label><input type="text" id="lm-itcontact" placeholder="e.g. Priya S."></div>
+        <div class="fg"><label>IT contact email</label><input type="email" id="lm-itemail" placeholder="e.g. priya.s@company.com"></div>
+        <div class="fg"><label>Phone / ext</label><input type="text" id="lm-phone" placeholder="e.g. +91-44-1234-5678"></div>
+        <div class="fg"><label>Status</label>
+          <select id="lm-status">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="construction">Under construction</option>
+          </select>
+        </div>
+        <div class="fg full"><label>Notes</label><textarea id="lm-notes" placeholder="Any additional information about this location..." style="min-height:60px;"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="cm('modal-location')">Cancel</button>
+      <button class="btn btn-primary" id="lm-save" onclick="saveLocation()"><i class="ti ti-check"></i> Save location</button>
+    </div>
   </div>
 </div>
 
@@ -1534,6 +1663,7 @@ async function doLogin(){
   app.style.display='flex';
   renderSidebar();
   const first={user:'my-tickets',tech:'dashboard',admin:'dashboard'}[CU.role];
+  populateLocationDropdowns();
   showPage(first);
 }
 document.getElementById('l-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
@@ -1554,6 +1684,7 @@ function logoClick(){
 const TABS={
   user:[
     {id:'my-tickets',icon:'ti-ticket',label:'My Tickets',badge:'myOpen'},
+    {id:'location',icon:'ti-map-pin',label:'Locations'},
     {id:'kb-user',icon:'ti-books',label:'Knowledge Base'},
   ],
   tech:[
@@ -1561,6 +1692,7 @@ const TABS={
     {id:'my-assigned',icon:'ti-user-check',label:'My Assigned',badge:'myAssigned'},
     {id:'all-tickets',icon:'ti-ticket',label:'All Tickets',badge:'allOpen'},
     {id:'sla',icon:'ti-clock',label:'SLA Monitor'},
+    {id:'location',icon:'ti-map-pin',label:'Locations'},
     {id:'kb-admin',icon:'ti-books',label:'Knowledge Base'},
   ],
   admin:[
@@ -1571,7 +1703,9 @@ const TABS={
     {id:'approvals',icon:'ti-checks',label:'Approvals',badge:'appr'},
     {id:'assets',icon:'ti-device-laptop',label:'Assets'},
     {id:'analytics',icon:'ti-chart-bar',label:'Analytics'},
+    {id:'location',icon:'ti-map-pin',label:'Locations'},
     {id:'kb-admin',icon:'ti-books',label:'Knowledge Base'},
+    {id:'manage-locations',icon:'ti-map-pins',label:'Manage Locations'},
     {id:'access',icon:'ti-users',label:'Portal Access'},
   ],
 };
@@ -1581,6 +1715,7 @@ function renderSidebar(){
   document.getElementById('sb-user-block').innerHTML=`
     <div class="sb-user-name">${CU.name}</div>
     <div class="sb-user-meta">${CU.empId} · ${CU.dept||'IT'}</div>
+    ${CU.location?`<div class="sb-user-meta" style="margin-top:1px"><i class="ti ti-map-pin" style="font-size:9px;margin-right:3px;"></i>${CU.location}</div>`:''}
     <span class="sb-role ${roleColor[CU.role]}">${roleLbl[CU.role]}</span>`;
   const tabs=TABS[CU.role]||TABS.user;
   const sections={user:[{label:'Menu',from:0}],tech:[{label:'Operations',from:0},{label:'Management',from:3}],admin:[{label:'Operations',from:0},{label:'Management',from:3},{label:'Resources',from:5}]};
@@ -1620,7 +1755,7 @@ function showPage(id){
   const titles={
     'my-tickets':'My Tickets','kb-user':'Knowledge Base','dashboard':'Dashboard',
     'all-tickets':'All Tickets','sla':'SLA Monitor','approvals':'Approvals',
-    'assets':'Asset Inventory','analytics':'Analytics','kb-admin':'Knowledge Base','access':'Portal Access',
+    'assets':'Asset Inventory','analytics':'Analytics','kb-admin':'Knowledge Base','access':'Portal Access','location':'Office Locations','manage-locations':'Manage Locations',
     'my-assigned':'My Assigned Tickets'
   };
   document.getElementById('topbar-title').textContent=titles[id]||id;
@@ -1635,6 +1770,8 @@ function showPage(id){
   if(id==='kb-user')renderKB('kb-u');
   if(id==='kb-admin')renderKB('kb-a');
   if(id==='access')renderAccess();
+  if(id==='location')renderLocations();
+  if(id==='manage-locations')renderManageLocations();
 }
 function globalSearch(v){srch.my=v.toLowerCase();srch.all=v.toLowerCase();srch.mine=v.toLowerCase();if(curPage==='my-tickets')renderMyTickets();if(curPage==='all-tickets')renderAllTickets();if(curPage==='my-assigned')renderMyAssigned();}
 
@@ -1878,6 +2015,7 @@ function renderAccess(){
       <td class="mono">${u.username}</td>
       <td><span class="badge ${rBdg[u.role]}">${rLbl[u.role]}</span></td>
       <td style="color:var(--tx2)">${u.dept||'—'}</td>
+      <td style="color:var(--tx2);font-size:12px">${u.location||'—'}</td>
       <td><span class="badge ${u.active?'b-res':'b-closed'}">${u.active?'Active':'Inactive'}</span></td>
       <td><div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn btn-sm btn-amber" onclick="openUserModal(${u.id})"><i class="ti ti-edit"></i> Edit</button>
@@ -1900,10 +2038,12 @@ function openUserModal(id){
     document.getElementById('um-role').value=u.role;
     document.getElementById('um-dept').value=u.dept||'';
     document.getElementById('um-active').value=u.active?'true':'false';
+    document.getElementById('um-location').value=u.location||'';
   }else{
     ['um-name','um-empid','um-email','um-uname','um-pass','um-dept'].forEach(f=>document.getElementById(f).value='');
     document.getElementById('um-role').value='user';
     document.getElementById('um-active').value='true';
+    document.getElementById('um-location').value='';
   }
   document.getElementById('modal-user').classList.add('open');
 }
@@ -1925,11 +2065,12 @@ async function saveUser(){
     u.name=name;u.empId=empId;u.email=email;u.username=uname;u.password=pass;
     u.role=document.getElementById('um-role').value;
     u.dept=document.getElementById('um-dept').value;
+    u.location=document.getElementById('um-location').value;
     u.active=active;
     await dbUpdateUser(u);
     toast('User updated.');
   }else{
-    const newUser={id:nextUserId++,empId,name,email,username:uname,password:pass,role:document.getElementById('um-role').value,dept:document.getElementById('um-dept').value,active};
+    const newUser={id:nextUserId++,empId,name,email,username:uname,password:pass,role:document.getElementById('um-role').value,dept:document.getElementById('um-dept').value,location:document.getElementById('um-location').value,active};
     USERS.push(newUser);
     await dbInsertUser(newUser);
     toast('User added. They can now sign in.');
@@ -2238,6 +2379,202 @@ function exportCSV(type){
 function cm(id){document.getElementById(id).classList.remove('open');}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(m=>m.classList.remove('open'));});
 document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');}));
+
+// ══ LOCATION DATA & FUNCTIONS ══════════════════════════════════════════════════
+let LOCATIONS = [
+  {id:1, name:'Chennai Head Office', type:'office', city:'Chennai', state:'Tamil Nadu', country:'India', zip:'600001', address:'No. 42, Anna Salai, Teynampet', headcount:120, itContact:'Priya S.', itEmail:'priya.s@company.com', phone:'+91-44-1234-5678', status:'active', notes:'Primary HQ. IT helpdesk on Floor 3.'},
+  {id:2, name:'Bangalore Tech Park', type:'office', city:'Bangalore', state:'Karnataka', country:'India', zip:'560001', address:'Outer Ring Road, Marathahalli', headcount:85, itContact:'Arjun R.', itEmail:'arjun.r@company.com', phone:'+91-80-9876-5432', status:'active', notes:'Engineering & development teams.'},
+  {id:3, name:'Mumbai Data Centre', type:'datacenter', city:'Mumbai', state:'Maharashtra', country:'India', zip:'400001', address:'SEEPZ, Andheri East', headcount:12, itContact:'Meera M.', itEmail:'meera.m@company.com', phone:'+91-22-3456-7890', status:'active', notes:'Primary DC. 24/7 NOC monitoring.'},
+  {id:4, name:'Delhi NCR Remote Site', type:'remote', city:'Gurugram', state:'Haryana', country:'India', zip:'122001', address:'Cyber City, Phase 2', headcount:30, itContact:'Priya S.', itEmail:'priya.s@company.com', phone:'+91-11-2345-6789', status:'active', notes:'Sales & support team.'},
+  {id:5, name:'Hyderabad Office', type:'office', city:'Hyderabad', state:'Telangana', country:'India', zip:'500081', address:'HITEC City, Madhapur', headcount:45, itContact:'Arjun R.', itEmail:'arjun.r@company.com', phone:'+91-40-5678-1234', status:'active', notes:''},
+];
+let nextLocId = 6;
+let editLocId = null;
+let locFilter = 'all';
+let locSearch = '';
+
+const LOC_TYPE_CONFIG = {
+  office:     { color:'#0B63CE', icon:'ti-building', label:'Office' },
+  datacenter: { color:'#00B4B4', icon:'ti-server',   label:'Data Centre' },
+  remote:     { color:'#D97706', icon:'ti-wifi',      label:'Remote Site' },
+};
+const LOC_STATUS_CONFIG = {
+  active:       { color:'#0D7C53', label:'Active' },
+  inactive:     { color:'#64748B', label:'Inactive' },
+  construction: { color:'#7C3AED', label:'Under construction' },
+};
+
+function sfLoc(btn, val) {
+  locFilter = val;
+  btn.closest('.fbar').querySelectorAll('.fb').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  renderLocations();
+}
+function filterLocations(q) {
+  locSearch = q.toLowerCase();
+  renderLocations();
+}
+
+function renderLocations() {
+  let list = [...LOCATIONS];
+  if (locFilter !== 'all') list = list.filter(l => l.type === locFilter);
+  if (locSearch) list = list.filter(l =>
+    l.name.toLowerCase().includes(locSearch) ||
+    l.city.toLowerCase().includes(locSearch) ||
+    l.country.toLowerCase().includes(locSearch) ||
+    l.type.toLowerCase().includes(locSearch)
+  );
+
+  // Stats
+  const total = LOCATIONS.length;
+  const offices = LOCATIONS.filter(l => l.type === 'office').length;
+  const dcs = LOCATIONS.filter(l => l.type === 'datacenter').length;
+  document.getElementById('loc-stats').innerHTML = `
+    <div class="stat" style="--accent-color:#0B63CE">
+      <div class="lbl">Total locations</div><div class="num" style="font-family:var(--mono)">${total}</div>
+    </div>
+    <div class="stat" style="--accent-color:#0D7C53">
+      <div class="lbl">Office sites</div><div class="num" style="font-family:var(--mono)">${offices}</div>
+    </div>
+    <div class="stat" style="--accent-color:#00B4B4">
+      <div class="lbl">Data centres</div><div class="num" style="font-family:var(--mono)">${dcs}</div>
+    </div>`;
+
+  const grid = document.getElementById('loc-grid');
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><i class="ti ti-map-off"></i><p>No locations match this filter.</p></div>`;
+    return;
+  }
+  grid.innerHTML = list.map(l => {
+    const tc = LOC_TYPE_CONFIG[l.type] || LOC_TYPE_CONFIG.office;
+    const sc = LOC_STATUS_CONFIG[l.status] || LOC_STATUS_CONFIG.active;
+    const isAdmin = CU && CU.role === 'admin';
+    return `<div class="loc-card" style="--loc-color:${tc.color}">
+      <div class="loc-type-icon" style="background:${tc.color}18;color:${tc.color}">
+        <i class="ti ${tc.icon}"></i>
+      </div>
+      <div class="loc-name">${l.name}</div>
+      <div class="loc-city"><i class="ti ti-map-pin" style="font-size:12px;color:var(--tx3)"></i>${l.city}, ${l.state || l.country}</div>
+      <div class="loc-meta">
+        <div class="loc-meta-item"><div class="lk">Type</div><div class="lv">${tc.label}</div></div>
+        <div class="loc-meta-item"><div class="lk">Country</div><div class="lv">${l.country}</div></div>
+        <div class="loc-meta-item"><div class="lk">Head count</div><div class="lv">${l.headcount || '—'}</div></div>
+        <div class="loc-meta-item"><div class="lk">IT Contact</div><div class="lv">${l.itContact || '—'}</div></div>
+        ${l.address ? `<div class="loc-meta-item" style="grid-column:1/-1"><div class="lk">Address</div><div class="lv">${l.address}</div></div>` : ''}
+        ${l.phone ? `<div class="loc-meta-item"><div class="lk">Phone</div><div class="lv">${l.phone}</div></div>` : ''}
+        ${l.itEmail ? `<div class="loc-meta-item"><div class="lk">IT Email</div><div class="lv" style="font-size:11px;">${l.itEmail}</div></div>` : ''}
+        ${l.notes ? `<div class="loc-meta-item" style="grid-column:1/-1"><div class="lk">Notes</div><div class="lv" style="color:var(--tx2)">${l.notes}</div></div>` : ''}
+      </div>
+      <div class="loc-footer">
+        <div style="display:flex;align-items:center;font-size:12px;color:var(--tx2);">
+          <span class="loc-status-dot" style="background:${sc.color}"></span>${sc.label}
+        </div>
+        ${isAdmin ? `<button class="btn btn-sm btn-amber" onclick="openLocationModal(${l.id})"><i class="ti ti-edit"></i> Edit</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderManageLocations() {
+  const tc = LOC_TYPE_CONFIG;
+  const sc = LOC_STATUS_CONFIG;
+  document.getElementById('manage-loc-body').innerHTML = LOCATIONS.map(l => `<tr>
+    <td style="font-weight:600">${l.name}</td>
+    <td><span class="badge" style="background:${(tc[l.type]||tc.office).color}18;color:${(tc[l.type]||tc.office).color}">${(tc[l.type]||tc.office).label}</span></td>
+    <td>${l.city}</td>
+    <td>${l.country}</td>
+    <td style="font-family:var(--mono)">${l.headcount || '—'}</td>
+    <td>${l.itContact || '—'}</td>
+    <td><span class="badge" style="background:${(sc[l.status]||sc.active).color}18;color:${(sc[l.status]||sc.active).color}">${(sc[l.status]||sc.active).label}</span></td>
+    <td>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-sm btn-amber" onclick="openLocationModal(${l.id})"><i class="ti ti-edit"></i> Edit</button>
+        <button class="btn btn-sm btn-red" onclick="deleteLocation(${l.id})"><i class="ti ti-trash"></i></button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+
+function openLocationModal(id) {
+  editLocId = id;
+  document.getElementById('loc-modal-title').textContent = id ? 'Edit location' : 'Add location';
+  document.getElementById('lm-save').innerHTML = `<i class="ti ti-check"></i> ${id ? 'Save changes' : 'Add location'}`;
+  if (id) {
+    const l = LOCATIONS.find(x => x.id === id);
+    document.getElementById('lm-name').value     = l.name;
+    document.getElementById('lm-type').value     = l.type;
+    document.getElementById('lm-city').value     = l.city;
+    document.getElementById('lm-state').value    = l.state || '';
+    document.getElementById('lm-country').value  = l.country;
+    document.getElementById('lm-zip').value      = l.zip || '';
+    document.getElementById('lm-address').value  = l.address || '';
+    document.getElementById('lm-headcount').value= l.headcount || '';
+    document.getElementById('lm-itcontact').value= l.itContact || '';
+    document.getElementById('lm-itemail').value  = l.itEmail || '';
+    document.getElementById('lm-phone').value    = l.phone || '';
+    document.getElementById('lm-status').value   = l.status;
+    document.getElementById('lm-notes').value    = l.notes || '';
+  } else {
+    ['lm-name','lm-city','lm-state','lm-country','lm-zip','lm-address',
+     'lm-headcount','lm-itcontact','lm-itemail','lm-phone','lm-notes'].forEach(f => {
+      document.getElementById(f).value = '';
+    });
+    document.getElementById('lm-type').value   = 'office';
+    document.getElementById('lm-status').value = 'active';
+  }
+  document.getElementById('modal-location').classList.add('open');
+}
+
+function saveLocation() {
+  const name    = document.getElementById('lm-name').value.trim();
+  const city    = document.getElementById('lm-city').value.trim();
+  const country = document.getElementById('lm-country').value.trim();
+  if (!name || !city || !country) { alert('Name, city and country are required.'); return; }
+  const data = {
+    name, city, country,
+    type:      document.getElementById('lm-type').value,
+    state:     document.getElementById('lm-state').value.trim(),
+    zip:       document.getElementById('lm-zip').value.trim(),
+    address:   document.getElementById('lm-address').value.trim(),
+    headcount: parseInt(document.getElementById('lm-headcount').value) || 0,
+    itContact: document.getElementById('lm-itcontact').value.trim(),
+    itEmail:   document.getElementById('lm-itemail').value.trim(),
+    phone:     document.getElementById('lm-phone').value.trim(),
+    status:    document.getElementById('lm-status').value,
+    notes:     document.getElementById('lm-notes').value.trim(),
+  };
+  if (editLocId) {
+    Object.assign(LOCATIONS.find(l => l.id === editLocId), data);
+    toast('Location updated.');
+  } else {
+    LOCATIONS.push({ id: nextLocId++, ...data });
+    toast('Location added.');
+  }
+  cm('modal-location');
+  populateLocationDropdowns();
+  if (curPage === 'location') renderLocations();
+  if (curPage === 'manage-locations') renderManageLocations();
+}
+
+function deleteLocation(id) {
+  if (!confirm('Delete this location? This cannot be undone.')) return;
+  const idx = LOCATIONS.findIndex(l => l.id === id);
+  if (idx > -1) LOCATIONS.splice(idx, 1);
+  populateLocationDropdowns();
+  renderManageLocations();
+  toast('Location deleted.');
+}
+
+function populateLocationDropdowns() {
+  // Populate user modal location dropdown
+  const sel = document.getElementById('um-location');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">— Select location —</option>' +
+    LOCATIONS.filter(l => l.status === 'active').map(l =>
+      `<option value="${l.name}" ${l.name === current ? 'selected' : ''}>${l.name} (${l.city})</option>`
+    ).join('');
+}
 </script>
 </body>
 </html>
