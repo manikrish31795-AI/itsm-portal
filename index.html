@@ -941,7 +941,7 @@ tbody tr.rc:hover td { background: #EEF4FF; }
         <button class="fb" onclick="sf(this,'my','cancelled')">Cancelled</button>
       </div>
       <div class="card"><table>
-        <thead><tr><th>ID</th><th>Subject</th><th>Category</th><th>Asset</th><th>Priority</th><th>Status</th><th>Created</th><th>SLA</th><th></th></tr></thead>
+        <thead><tr><th>ID</th><th>Subject</th><th>Location</th><th>Category</th><th>Asset</th><th>Priority</th><th>Status</th><th>Created</th><th>SLA</th><th></th></tr></thead>
         <tbody id="my-body"></tbody>
       </table></div>
     </div>
@@ -959,11 +959,41 @@ tbody tr.rc:hover td { background: #EEF4FF; }
 
     <!-- TECH/ADMIN: Dashboard -->
     <div class="page-wrap" id="page-dashboard">
-      <div class="ph"><h2>Dashboard</h2></div>
+      <div class="ph">
+        <h2>Dashboard</h2>
+        <div class="ph-r">
+          <select id="dash-loc-filter" onchange="renderDashboard()" style="padding:7px 12px;border-radius:var(--r);border:1px solid var(--b2);background:var(--s0);color:var(--tx1);font-size:12px;font-weight:500;">
+            <option value="all">All locations</option>
+          </select>
+        </div>
+      </div>
       <div class="stats" id="dash-stats"></div>
-      <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:16px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
         <div class="card"><div class="card-head"><h3>Tickets by category</h3></div><div class="card-body" id="cat-chart"></div></div>
         <div class="card"><div class="card-head"><h3>Recent activity</h3></div><div class="card-body" id="recent-act"></div></div>
+      </div>
+      <!-- Location/city wise report — admin only -->
+      <div id="loc-report-section">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+          <div class="card">
+            <div class="card-head"><h3><i class="ti ti-map-pin" style="color:var(--accent);margin-right:5px;"></i>Tickets by location</h3></div>
+            <div class="card-body" id="loc-chart"></div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h3><i class="ti ti-map-pin" style="color:var(--accent);margin-right:5px;"></i>Location summary</h3></div>
+            <div class="card-body" id="loc-summary"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h3><i class="ti ti-table" style="color:var(--accent);margin-right:5px;"></i>Detailed location report</h3>
+            <button class="btn btn-sm btn-green" onclick="exportCSV('loc-report')"><i class="ti ti-download"></i> Export</button>
+          </div>
+          <table>
+            <thead><tr><th>Location</th><th>Total tickets</th><th>Open</th><th>In progress</th><th>Resolved</th><th>Closed</th><th>Cancelled</th><th>SLA breaches</th><th>Avg priority</th></tr></thead>
+            <tbody id="loc-report-body"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -1004,7 +1034,7 @@ tbody tr.rc:hover td { background: #EEF4FF; }
         <button class="fb" onclick="sf(this,'all','cancelled')">Cancelled</button>
       </div>
       <div class="card"><table>
-        <thead><tr><th>ID</th><th>Subject</th><th>Category</th><th>Asset</th><th>Requester</th><th>Emp ID</th><th>Assignee</th><th>Priority</th><th>Status</th><th>SLA</th><th></th></tr></thead>
+        <thead><tr><th>ID</th><th>Subject</th><th>Location</th><th>Category</th><th>Asset</th><th>Requester</th><th>Emp ID</th><th>Assignee</th><th>Priority</th><th>Status</th><th>SLA</th><th></th></tr></thead>
         <tbody id="all-body"></tbody>
       </table></div>
     </div>
@@ -1185,6 +1215,11 @@ tbody tr.rc:hover td { background: #EEF4FF; }
         </div>
         <div class="fg full"><label>Subject *</label><input type="text" id="nw-subj" placeholder="Brief description of the issue" oninput="scheduleAI()"></div>
         <div class="fg full"><label>Description</label><textarea id="nw-desc" placeholder="Full details, error messages, steps to reproduce..." oninput="scheduleAI()"></textarea></div>
+        <div class="fg"><label>Location / City *</label>
+          <select id="nw-location">
+            <option value="">— Select your location —</option>
+          </select>
+        </div>
         <div class="fg"><label>Category</label>
           <select id="nw-cat"><option>Network</option><option>Hardware</option><option>Software</option><option>Email</option><option>Access / Permissions</option><option>Security</option><option>Other</option></select>
         </div>
@@ -1400,7 +1435,7 @@ async function loadAllData(){
   TICKETS = t.map(x=>({
     id:x.id,subject:x.subject,category:x.category,ticketType:x.ticket_type||'incident',requester:x.requester,requesterEmpId:x.requester_emp_id,
     assetTag:x.asset_tag,assetName:x.asset_name,assignee:x.assignee,priority:x.priority,status:x.status,
-    sla:x.sla,created:x.created,resolution:x.resolution||'',csat:x.csat||0,csatComment:x.csat_comment||'',
+    sla:x.sla,created:x.created,resolution:x.resolution||'',location:x.location||'',csat:x.csat||0,csatComment:x.csat_comment||'',
     comments:c.filter(cm=>cm.ticket_id===x.id).map(cm=>({by:cm.by_user,time:cm.time,text:cm.text}))
   }));
   const nums = TICKETS.map(x=>parseInt((x.id||'TKT-0').split('-')[1]||0));
@@ -1429,7 +1464,7 @@ async function dbUpdateAsset(a){
   if(error)console.error('dbUpdateAsset',error);
 }
 async function dbInsertTicket(t){
-  const {error}=await dbc.from('tickets').insert([{id:t.id,subject:t.subject,category:t.category,ticket_type:t.ticketType||'incident',requester:t.requester,requester_emp_id:t.requesterEmpId,asset_tag:t.assetTag,asset_name:t.assetName,assignee:t.assignee,priority:t.priority,status:t.status,sla:t.sla,created:t.created,resolution:t.resolution}]);
+  const {error}=await dbc.from('tickets').insert([{id:t.id,subject:t.subject,category:t.category,ticket_type:t.ticketType||'incident',location:t.location||'',requester:t.requester,requester_emp_id:t.requesterEmpId,asset_tag:t.assetTag,asset_name:t.assetName,assignee:t.assignee,priority:t.priority,status:t.status,sla:t.sla,created:t.created,resolution:t.resolution}]);
   if(error)console.error('dbInsertTicket',error);
 }
 async function dbUpdateTicket(t){
@@ -1790,7 +1825,9 @@ function renderMyTickets(){
   if(filt.my!=='all')list=list.filter(t=>t.status===filt.my);
   if(srch.my)list=list.filter(t=>t.subject.toLowerCase().includes(srch.my)||t.id.toLowerCase().includes(srch.my));
   document.getElementById('my-body').innerHTML=list.length?list.map(t=>`<tr class="rc" onclick="openDetail('${t.id}')">
-    <td class="mono">${t.id}</td><td>${t.subject}</td><td>${t.category}</td>
+    <td class="mono">${t.id}</td><td>${t.subject}</td>
+    <td><span style="font-size:11px;display:flex;align-items:center;gap:3px"><i class="ti ti-map-pin" style="color:var(--accent);font-size:11px"></i>${t.location||'—'}</span></td>
+    <td>${t.category}</td>
     <td>${t.assetTag&&t.assetTag!=='N/A'?`<span class="atag">${t.assetTag}</span>`:`<span class="badge b-na">N/A</span>`}</td>
     <td>${pb(t.priority)}</td><td>${sb(t.status)}</td>
     <td class="mono" style="color:var(--tx3)">${t.created}</td><td>${slab(t.sla)}</td>
@@ -1831,22 +1868,131 @@ function renderMyAssigned(){
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 function renderDashboard(){
-  const open=TICKETS.filter(t=>t.status==='open').length;
-  const ip=TICKETS.filter(t=>t.status==='inprogress').length;
-  const res=TICKETS.filter(t=>t.status==='resolved').length;
-  const br=TICKETS.filter(t=>t.sla==='breach').length;
+  // Populate location filter dropdown
+  const locDrop=document.getElementById('dash-loc-filter');
+  if(locDrop){
+    const cur=locDrop.value||'all';
+    locDrop.innerHTML='<option value="all">All locations</option>'+
+      LOCATIONS.filter(l=>l.status==='active').map(l=>
+        `<option value="${l.name}" ${l.name===cur?'selected':''}>${l.name} — ${l.city}</option>`
+      ).join('');
+  }
+  const selLoc = locDrop ? locDrop.value : 'all';
+  const filtered = selLoc==='all' ? TICKETS : TICKETS.filter(t=>(t.location||'')=== selLoc);
+
+  // Top stat cards
+  const open=filtered.filter(t=>t.status==='open').length;
+  const ip=filtered.filter(t=>t.status==='inprogress').length;
+  const res=filtered.filter(t=>t.status==='resolved').length;
+  const br=filtered.filter(t=>t.sla==='breach').length;
+  const locLabel = selLoc==='all' ? 'All locations' : selLoc;
   document.getElementById('dash-stats').innerHTML=`
-    <div class="stat" style="--accent-color:var(--cyan)"><div class="lbl">Open</div><div class="num">${open}</div><div class="sub">Awaiting action</div></div>
-    <div class="stat" style="--accent-color:var(--amber)"><div class="lbl">In progress</div><div class="num">${ip}</div><div class="sub">Being worked on</div></div>
-    <div class="stat" style="--accent-color:var(--green)"><div class="lbl">Resolved</div><div class="num">${res}</div><div class="sub">Closed out</div></div>
-    <div class="stat" style="--accent-color:var(--red)"><div class="lbl">SLA breached</div><div class="num">${br}</div><div class="sub">Needs attention</div></div>`;
-  const cats={};TICKETS.forEach(t=>{cats[t.category]=(cats[t.category]||0)+1;});
-  const max=Math.max(...Object.values(cats),1);
-  const colors=['#22D3EE','#FBBF24','#34D399','#A78BFA','#F87171','#60A5FA'];
-  document.getElementById('cat-chart').innerHTML=Object.entries(cats).map(([c,n],i)=>
-    `<div class="bc-row"><span class="bc-lbl">${c}</span><div class="bc-track"><div class="bc-fill" style="width:${Math.round(n/max*100)}%;background:${colors[i%colors.length]}"></div></div><span class="bc-val">${n}</span></div>`).join('');
-  document.getElementById('recent-act').innerHTML=TICKETS.slice(0,6).map(t=>
-    `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)"><div style="flex:1"><div style="font-size:12px;font-weight:500">${t.subject}</div><div style="font-size:11px;color:var(--tx3);font-family:var(--mono)">${t.id} · ${t.requester}</div></div>${sb(t.status)}</div>`).join('');
+    <div class="stat" style="--accent-color:#0B63CE"><div class="lbl">Open</div><div class="num" style="font-family:var(--mono)">${open}</div><div class="sub">${locLabel}</div></div>
+    <div class="stat" style="--accent-color:#D97706"><div class="lbl">In progress</div><div class="num" style="font-family:var(--mono)">${ip}</div><div class="sub">${locLabel}</div></div>
+    <div class="stat" style="--accent-color:#0D7C53"><div class="lbl">Resolved</div><div class="num" style="font-family:var(--mono)">${res}</div><div class="sub">${locLabel}</div></div>
+    <div class="stat" style="--accent-color:#991B1B"><div class="lbl">SLA breached</div><div class="num" style="font-family:var(--mono)">${br}</div><div class="sub">${locLabel}</div></div>`;
+
+  // By category chart
+  const cats={};
+  filtered.forEach(t=>{cats[t.category]=(cats[t.category]||0)+1;});
+  const catMax=Math.max(...Object.values(cats),1);
+  const colors=['#0B63CE','#00B4B4','#0D7C53','#7C3AED','#DC2626','#D97706'];
+  document.getElementById('cat-chart').innerHTML=Object.keys(cats).length
+    ? Object.entries(cats).map(([c,n],i)=>
+        `<div class="bc-row"><span class="bc-lbl">${c}</span><div class="bc-track"><div class="bc-fill" style="width:${Math.round(n/catMax*100)}%;background:${colors[i%colors.length]}"></div></div><span class="bc-val">${n}</span></div>`).join('')
+    : '<div class="empty" style="padding:20px"><i class="ti ti-chart-bar"></i><p>No tickets yet</p></div>';
+
+  // Recent activity
+  document.getElementById('recent-act').innerHTML=filtered.slice(0,6).map(t=>
+    `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)">
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:500">${t.subject}</div>
+        <div style="font-size:10px;color:var(--tx3);font-family:var(--mono);margin-top:2px">${t.id} · ${t.requester}${t.location?' · <i class="ti ti-map-pin" style="font-size:10px;color:var(--accent)"></i> '+t.location:''}</div>
+      </div>${sb(t.status)}
+    </div>`).join('') || '<div class="empty" style="padding:16px"><p>No recent activity</p></div>';
+
+  // LOCATION REPORT (admin/tech only)
+  const locSection=document.getElementById('loc-report-section');
+  if(locSection){
+    const isAdmin = CU && (CU.role==='admin'||CU.role==='tech');
+    locSection.style.display = isAdmin ? 'block' : 'none';
+    if(isAdmin){ renderLocationReport(filtered); }
+  }
+}
+
+function renderLocationReport(tickets){
+  const locColors=['#0B63CE','#00B4B4','#0D7C53','#7C3AED','#DC2626','#D97706','#075985','#5B21B6'];
+  // Build per-location data
+  const locMap={};
+  tickets.forEach(t=>{
+    const loc=t.location||'Unknown';
+    if(!locMap[loc]) locMap[loc]={name:loc,total:0,open:0,inprogress:0,resolved:0,closed:0,cancelled:0,pendingapproval:0,breach:0,priScore:0};
+    locMap[loc].total++;
+    if(t.status==='open')locMap[loc].open++;
+    else if(t.status==='inprogress')locMap[loc].inprogress++;
+    else if(t.status==='resolved')locMap[loc].resolved++;
+    else if(t.status==='closed')locMap[loc].closed++;
+    else if(t.status==='cancelled')locMap[loc].cancelled++;
+    else if(t.status==='pendingapproval')locMap[loc].pendingapproval++;
+    if(t.sla==='breach')locMap[loc].breach++;
+    const priVal={critical:4,high:3,medium:2,low:1}[t.priority]||2;
+    locMap[loc].priScore+=priVal;
+  });
+  const locs=Object.values(locMap).sort((a,b)=>b.total-a.total);
+  const maxTotal=Math.max(...locs.map(l=>l.total),1);
+
+  // Location bar chart
+  document.getElementById('loc-chart').innerHTML = locs.length
+    ? locs.map((l,i)=>`
+        <div class="bc-row">
+          <span class="bc-lbl" style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${l.name}">${l.name}</span>
+          <div class="bc-track">
+            <div class="bc-fill" style="width:${Math.round(l.total/maxTotal*100)}%;background:${locColors[i%locColors.length]}"></div>
+          </div>
+          <span class="bc-val">${l.total}</span>
+        </div>`).join('')
+    : '<div class="empty" style="padding:16px"><p>No location data yet</p></div>';
+
+  // Location summary tiles
+  document.getElementById('loc-summary').innerHTML = locs.length
+    ? locs.slice(0,6).map((l,i)=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">
+          <div style="width:8px;height:8px;border-radius:50%;background:${locColors[i%locColors.length]};flex-shrink:0;"></div>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:600">${l.name}</div>
+            <div style="font-size:10px;color:var(--tx3);margin-top:1px">
+              ${l.open} open · ${l.inprogress} in-progress · ${l.resolved} resolved
+              ${l.breach>0?`<span style="color:var(--red-bg);font-weight:600;background:var(--red-bg);padding:1px 5px;border-radius:8px;color:#991B1B;"> ⚠ ${l.breach} SLA breach</span>`:''}
+            </div>
+          </div>
+          <div style="font-size:18px;font-weight:700;font-family:var(--mono);color:${locColors[i%locColors.length]}">${l.total}</div>
+        </div>`).join('')
+    : '<div class="empty" style="padding:16px"><p>No data yet</p></div>';
+
+  // Detailed report table
+  const priLabel={4:'Critical',3:'High',2:'Medium',1:'Low'};
+  document.getElementById('loc-report-body').innerHTML = locs.length
+    ? locs.map((l,i)=>{
+        const avgPri=l.total ? Math.round(l.priScore/l.total) : 2;
+        const priMap={4:'b-crit',3:'b-high',2:'b-med',1:'b-low'};
+        return `<tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:10px;height:10px;border-radius:2px;background:${locColors[i%locColors.length]};flex-shrink:0;"></div>
+              <span style="font-weight:600">${l.name}</span>
+            </div>
+          </td>
+          <td style="font-family:var(--mono);font-weight:700">${l.total}</td>
+          <td><span class="badge b-open">${l.open}</span></td>
+          <td><span class="badge b-inp">${l.inprogress}</span></td>
+          <td><span class="badge b-res">${l.resolved}</span></td>
+          <td><span class="badge b-closed">${l.closed}</span></td>
+          <td><span class="badge b-closed">${l.cancelled}</span></td>
+          <td>${l.breach>0?`<span class="badge b-crit">${l.breach}</span>`:'<span class="badge b-res">0</span>'}</td>
+          <td><span class="badge ${priMap[avgPri]||'b-med'}">${priLabel[avgPri]||'Medium'}</span></td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="9"><div class="empty"><p>No tickets with location data yet.</p></div></td></tr>';
 }
 
 // ── APPROVALS ─────────────────────────────────────────────────────────────────
@@ -2104,6 +2250,12 @@ function openNewTicket(){
     assetBox.innerHTML=`<div class="na-box"><i class="ti ti-device-laptop-off" style="margin-right:6px"></i>No asset assigned to your account — showing <strong>N/A</strong>.</div>`;
   }
   ['nw-subj','nw-desc'].forEach(f=>document.getElementById(f).value='');
+  // Populate location dropdown and pre-select user's own location
+  const locSel=document.getElementById('nw-location');
+  locSel.innerHTML='<option value="">— Select your location —</option>'+
+    LOCATIONS.filter(l=>l.status==='active').map(l=>
+      `<option value="${l.name}" ${l.name===CU.location?'selected':''}>${l.name} — ${l.city}, ${l.country}</option>`
+    ).join('');
   document.getElementById('nw-type').value='incident';
   document.getElementById('nw-approval-note').style.display='none';
   document.getElementById('ai-box').style.display='none';
@@ -2115,7 +2267,9 @@ function toggleApprovalNote(){
 }
 async function submitTicket(){
   const subj=document.getElementById('nw-subj').value.trim();
+  const ticketLocation=document.getElementById('nw-location').value;
   if(!subj){alert('Please enter a subject.');return;}
+  if(!ticketLocation){alert('Please select a location / city.');return;}
   const asset=getUserAsset(CU.name);
   const ticketType=document.getElementById('nw-type').value;
   const needsApproval=ticketType==='software'||ticketType==='hardware';
@@ -2128,6 +2282,7 @@ async function submitTicket(){
     requesterEmpId:CU.empId,
     assetTag:asset?asset.tag:'N/A',
     assetName:asset?asset.name:'N/A',
+    location:ticketLocation,
     assignee:'Unassigned',
     priority:document.getElementById('nw-urg').value,
     status:needsApproval?'pendingapproval':'open',
@@ -2227,6 +2382,7 @@ function openDetail(id){
       <div class="dg-item"><div class="dk">Assignee</div><div class="dv">${t.assignee}</div></div>
       <div class="dg-item"><div class="dk">Asset ID</div><div class="dv" style="font-family:var(--mono);font-size:12px">${t.assetTag&&t.assetTag!=='N/A'?`<span class="atag">${t.assetTag}</span>`:'<span class="badge b-na">N/A</span>'}</div></div>
       <div class="dg-item"><div class="dk">Asset name</div><div class="dv" style="font-size:12px">${t.assetName||'N/A'}</div></div>
+      <div class="dg-item"><div class="dk">Location</div><div class="dv" style="display:flex;align-items:center;gap:5px"><i class="ti ti-map-pin" style="color:var(--accent);font-size:12px"></i>${t.location||'—'}</div></div>
       <div class="dg-item"><div class="dk">Created</div><div class="dv" style="font-family:var(--mono);font-size:11px">${t.created}</div></div>
       <div class="dg-item"><div class="dk">SLA</div><div class="dv">${slab(t.sla)}</div></div>
     </div>`;
@@ -2369,6 +2525,12 @@ function exportCSV(type){
   if(type==='tickets'){rows=[['ID','Subject','Type','Category','Asset ID','Asset Name','Requester','Emp ID','Assignee','Priority','Status','SLA','Created'],...TICKETS.map(t=>[t.id,t.subject,t.ticketType||'incident',t.category,t.assetTag,t.assetName,t.requester,t.requesterEmpId||'',t.assignee,t.priority,t.status,t.sla,t.created])];fn='tickets.csv';}
   else if(type==='assets'){rows=[['Asset ID','Name','Type','Assigned To','Emp ID','Status','Serial','Updated'],...ASSETS.map(a=>[a.tag,a.name,a.type,a.assignedTo,a.assignedEmpId||'',a.status,a.serial||'',a.updated])];fn='assets.csv';}
   else if(type==='approvals'){rows=[['ID','Title','Type','Urgency','Description'],...APPROVALS.map(a=>[a.id,a.title,a.type,a.urgency,a.desc])];fn='approvals.csv';}
+  else if(type==='loc-report'){
+    const locMap2={};
+    TICKETS.forEach(t=>{const loc=t.location||'Unknown';if(!locMap2[loc])locMap2[loc]={name:loc,total:0,open:0,inprogress:0,resolved:0,closed:0,breach:0};locMap2[loc].total++;if(t.status==='open')locMap2[loc].open++;if(t.status==='inprogress')locMap2[loc].inprogress++;if(t.status==='resolved')locMap2[loc].resolved++;if(t.status==='closed')locMap2[loc].closed++;if(t.sla==='breach')locMap2[loc].breach++;});
+    rows=[['Location','Total','Open','In Progress','Resolved','Closed','SLA Breaches'],...Object.values(locMap2).map(l=>[l.name,l.total,l.open,l.inprogress,l.resolved,l.closed,l.breach])];
+    fn='location_report.csv';
+  }
   else{rows=[['Metric','Value'],['Tickets this month','186'],['CSAT','4.6'],['FCR','68%'],['Reopen rate','4.2%']];fn='analytics.csv';}
   const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=fn;a.click();
