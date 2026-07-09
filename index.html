@@ -1184,6 +1184,42 @@ tbody tr.rc:hover td { background: #EEF4FF; }
         </table>
       </div>
     </div>
+    <!-- ADMIN: Asset Models -->
+    <div class="page-wrap" id="page-models">
+      <div class="ph">
+        <div>
+          <h2>Asset Models</h2>
+          <div style="font-size:12px;color:var(--tx3);margin-top:2px;">Master list of all approved asset models by type</div>
+        </div>
+        <button class="btn btn-primary" onclick="openModelModal(null)"><i class="ti ti-plus"></i> Add model</button>
+      </div>
+      <!-- Stats -->
+      <div class="stats" id="model-stats" style="grid-template-columns:repeat(4,1fr);"></div>
+      <!-- Filter bar -->
+      <div class="fbar">
+        <button class="fb on" onclick="sfModel(this,'all')">All</button>
+        <button class="fb" onclick="sfModel(this,'Laptop')">Laptops</button>
+        <button class="fb" onclick="sfModel(this,'Desktop')">Desktops</button>
+        <button class="fb" onclick="sfModel(this,'Monitor')">Monitors</button>
+        <button class="fb" onclick="sfModel(this,'Printer')">Printers</button>
+        <button class="fb" onclick="sfModel(this,'Wifi Device')">Wifi</button>
+        <button class="fb" onclick="sfModel(this,'Network Device')">Network</button>
+        <button class="fb" onclick="sfModel(this,'Television Set')">TV</button>
+        <button class="fb" onclick="sfModel(this,'Peripherals')">Peripherals</button>
+        <div class="sw" style="margin-left:auto;">
+          <i class="ti ti-search"></i>
+          <input type="text" placeholder="Search models..." oninput="filterModels(this.value)">
+        </div>
+      </div>
+      <div class="card">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Model name</th><th>Asset type</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="model-body"></tbody>
+        </table>
+      </div>
+    </div>
 <!-- ── MODAL: New Ticket ───────────────────────────────────────────────────── -->
 <div class="overlay" id="modal-new">
   <div class="modal">
@@ -1285,6 +1321,64 @@ tbody tr.rc:hover td { background: #EEF4FF; }
 </div>
 
 
+
+<!-- ── MODAL: Add/Edit Model ──────────────────────────────────────────────── -->
+<div class="overlay" id="modal-model">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="model-modal-title">Add asset model</h3>
+      <button class="btn btn-sm btn-ghost" onclick="cm('modal-model')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="fgrid">
+        <div class="fg full"><label>Model name *</label><input type="text" id="mm-name" placeholder="e.g. Dell Latitude 3400"></div>
+        <div class="fg"><label>Asset type *</label>
+          <select id="mm-type">
+            <optgroup label="Computing">
+              <option value="Laptop">Laptop</option>
+              <option value="Desktop">Desktop</option>
+              <option value="Mobile">Mobile</option>
+              <option value="Server">Server</option>
+              <option value="Tablet">Tablet</option>
+            </optgroup>
+            <optgroup label="Peripherals">
+              <option value="Mouse">Mouse</option>
+              <option value="Keyboard">Keyboard</option>
+              <option value="Headphone">Headphone</option>
+              <option value="USB Headphone">USB Headphone</option>
+              <option value="Monitor">Monitor</option>
+            </optgroup>
+            <optgroup label="Network &amp; Connectivity">
+              <option value="Wifi Device">Wifi Device</option>
+              <option value="Network Device">Network Device</option>
+              <option value="Network">Network</option>
+            </optgroup>
+            <optgroup label="Office Equipment">
+              <option value="Printer">Printer</option>
+              <option value="Television Set">Television Set</option>
+            </optgroup>
+            <optgroup label="Other">
+              <option value="Other">Other</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="fg"><label>Manufacturer</label><input type="text" id="mm-brand" placeholder="e.g. Dell, HP, Lenovo"></div>
+        <div class="fg"><label>Status</label>
+          <select id="mm-status">
+            <option value="active">Active</option>
+            <option value="discontinued">Discontinued</option>
+            <option value="eol">End of Life</option>
+          </select>
+        </div>
+        <div class="fg full"><label>Notes</label><textarea id="mm-notes" placeholder="Specs, warranty info, or any relevant notes..." style="min-height:55px;"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="cm('modal-model')">Cancel</button>
+      <button class="btn btn-primary" id="mm-save" onclick="saveModel()"><i class="ti ti-check"></i> Save model</button>
+    </div>
+  </div>
+</div>
 <!-- ── MODAL: Add/Edit Location ──────────────────────────────────────────────── -->
 <div class="overlay" id="modal-location">
   <div class="modal">
@@ -1336,11 +1430,43 @@ tbody tr.rc:hover td { background: #EEF4FF; }
       <div class="fgrid">
         <div class="fg"><label>Asset ID</label><input type="text" id="am-tag" placeholder="e.g. AST-0150"></div>
         <div class="fg"><label>Name *</label><input type="text" id="am-name" placeholder="e.g. Dell Latitude 7420"></div>
-        <div class="fg"><label>Type</label><select id="am-type"><option>Laptop</option><option>Desktop</option><option>Mobile</option><option>Server</option><option>Network</option><option>Printer</option><option>Other</option></select></div>
+        <div class="fg"><label>Type</label><select id="am-type">
+              <optgroup label="Computing">
+                <option>Laptop</option>
+                <option>Desktop</option>
+                <option>Mobile</option>
+                <option>Server</option>
+                <option>Tablet</option>
+              </optgroup>
+              <optgroup label="Peripherals">
+                <option>Mouse</option>
+                <option>Keyboard</option>
+                <option>Headphone</option>
+                <option>USB Headphone</option>
+                <option>Monitor</option>
+              </optgroup>
+              <optgroup label="Network & Connectivity">
+                <option>Wifi Device</option>
+                <option>Network Device</option>
+                <option>Network</option>
+              </optgroup>
+              <optgroup label="Office Equipment">
+                <option>Printer</option>
+                <option>Television Set</option>
+              </optgroup>
+              <optgroup label="Other">
+                <option>Other</option>
+              </optgroup>
+            </select></div>
         <div class="fg"><label>Assigned to (name)</label><input type="text" id="am-assign" placeholder="Person or location"></div>
         <div class="fg"><label>Assigned Emp ID</label><input type="text" id="am-empid" placeholder="e.g. EMP-0041"></div>
         <div class="fg"><label>Status</label><select id="am-status"><option value="inuse">In use</option><option value="available">Available</option><option value="repair">In repair</option><option value="retired">Retired</option></select></div>
-        <div class="fg full"><label>Serial / model number</label><input type="text" id="am-serial" placeholder="Optional"></div>
+        <div class="fg"><label>Model (from master list)</label>
+          <select id="am-model-select" onchange="onAssetModelSelect(this.value)">
+            <option value="">— Select model —</option>
+          </select>
+        </div>
+        <div class="fg"><label>Serial number</label><input type="text" id="am-serial" placeholder="Optional"></div>
       </div>
     </div>
     <div class="modal-foot"><button class="btn btn-ghost" onclick="cm('modal-asset')">Cancel</button><button class="btn btn-primary" id="am-save" onclick="saveAsset()"><i class="ti ti-check"></i> Save asset</button></div>
@@ -1737,6 +1863,7 @@ const TABS={
     {id:'sla',icon:'ti-clock',label:'SLA Monitor'},
     {id:'approvals',icon:'ti-checks',label:'Approvals',badge:'appr'},
     {id:'assets',icon:'ti-device-laptop',label:'Assets'},
+    {id:'models',icon:'ti-list-details',label:'Asset Models'},
     {id:'analytics',icon:'ti-chart-bar',label:'Analytics'},
     {id:'location',icon:'ti-map-pin',label:'Locations'},
     {id:'kb-admin',icon:'ti-books',label:'Knowledge Base'},
@@ -1790,7 +1917,7 @@ function showPage(id){
   const titles={
     'my-tickets':'My Tickets','kb-user':'Knowledge Base','dashboard':'Dashboard',
     'all-tickets':'All Tickets','sla':'SLA Monitor','approvals':'Approvals',
-    'assets':'Asset Inventory','analytics':'Analytics','kb-admin':'Knowledge Base','access':'Portal Access','location':'Office Locations','manage-locations':'Manage Locations',
+    'assets':'Asset Inventory','analytics':'Analytics','kb-admin':'Knowledge Base','access':'Portal Access','location':'Office Locations','manage-locations':'Manage Locations','models':'Asset Models',
     'my-assigned':'My Assigned Tickets'
   };
   document.getElementById('topbar-title').textContent=titles[id]||id;
@@ -1806,6 +1933,7 @@ function showPage(id){
   if(id==='kb-admin')renderKB('kb-a');
   if(id==='access')renderAccess();
   if(id==='location')renderLocations();
+  if(id==='models')renderModels();
   if(id==='manage-locations')renderManageLocations();
 }
 function globalSearch(v){srch.my=v.toLowerCase();srch.all=v.toLowerCase();srch.mine=v.toLowerCase();if(curPage==='my-tickets')renderMyTickets();if(curPage==='all-tickets')renderAllTickets();if(curPage==='my-assigned')renderMyAssigned();}
@@ -2069,19 +2197,23 @@ function openAssetModal(id){
     document.getElementById('am-assign').value=a.assignedTo||'';
     document.getElementById('am-empid').value=a.assignedEmpId||'';
     document.getElementById('am-status').value=a.status;
+    if(document.getElementById('am-model-select'))document.getElementById('am-model-select').value=a.model||'';
     document.getElementById('am-serial').value=a.serial||'';
   }else{
     ['am-tag','am-name','am-assign','am-empid','am-serial'].forEach(f=>document.getElementById(f).value='');
     document.getElementById('am-type').value='Laptop';
+    if(document.getElementById('am-model-select'))document.getElementById('am-model-select').value='';
     document.getElementById('am-status').value='inuse';
   }
+  populateAssetModelDropdown();
   document.getElementById('modal-asset').classList.add('open');
 }
 async function saveAsset(){
   const tag=document.getElementById('am-tag').value.trim();
   const name=document.getElementById('am-name').value.trim();
   if(!name){alert('Asset name is required.');return;}
-  const data={tag:tag||'AST-'+String(nextAssetId).padStart(4,'0'),name,type:document.getElementById('am-type').value,assignedTo:document.getElementById('am-assign').value||'—',assignedEmpId:document.getElementById('am-empid').value||'',status:document.getElementById('am-status').value,serial:document.getElementById('am-serial').value,updated:nows()};
+  const modelSel=document.getElementById('am-model-select');
+  const data={tag:tag||'AST-'+String(nextAssetId).padStart(4,'0'),name,type:document.getElementById('am-type').value,model:modelSel?modelSel.value:'',assignedTo:document.getElementById('am-assign').value||'—',assignedEmpId:document.getElementById('am-empid').value||'',status:document.getElementById('am-status').value,serial:document.getElementById('am-serial').value,updated:nows()};
   if(editAssetId){
     Object.assign(ASSETS.find(a=>a.id===editAssetId),data);
     await dbUpdateAsset(ASSETS.find(a=>a.id===editAssetId));
@@ -2736,6 +2868,362 @@ function populateLocationDropdowns() {
     LOCATIONS.filter(l => l.status === 'active').map(l =>
       `<option value="${l.name}" ${l.name === current ? 'selected' : ''}>${l.name} (${l.city})</option>`
     ).join('');
+}
+
+// ══ ASSET MODEL FUNCTIONS ════════════════════════════════════════════════════
+let ASSET_MODELS = [
+  {id:1, type:'Desktop', name:'HP ProDesk 600 G2', status:'active'},
+  {id:2, type:'Desktop', name:'HP 600 G3 SFFF', status:'active'},
+  {id:3, type:'Desktop', name:'HP Pro G2 MT', status:'active'},
+  {id:4, type:'Desktop', name:'HP 280 G2 MT', status:'active'},
+  {id:5, type:'Desktop', name:'HP 280 G3 Microtower PC', status:'active'},
+  {id:6, type:'Desktop', name:'HP 280 Pro G1 Microtower Business PC', status:'active'},
+  {id:7, type:'Desktop', name:'HP EliteDesk 800 G2', status:'active'},
+  {id:8, type:'Desktop', name:'Dell Optiplex 3070', status:'active'},
+  {id:9, type:'Desktop', name:'Dell Optiplex 9020', status:'active'},
+  {id:10, type:'Desktop', name:'Dell Optiplex 7020', status:'active'},
+  {id:11, type:'Desktop', name:'Dell Precision 5820 Tower XCTO Base', status:'active'},
+  {id:12, type:'Desktop', name:'Dell Vostro 3800', status:'active'},
+  {id:13, type:'Desktop', name:'Dell 3020', status:'active'},
+  {id:14, type:'Desktop', name:'Dell Inspiron 620s', status:'active'},
+  {id:15, type:'Desktop', name:'Dell Vostro 230', status:'active'},
+  {id:16, type:'Desktop', name:'Dell Vostro 220s', status:'active'},
+  {id:17, type:'Desktop', name:'Dell 3579 G3 Gaming', status:'active'},
+  {id:18, type:'Desktop', name:'Lenovo V530-15ICB', status:'active'},
+  {id:19, type:'Desktop', name:'Lenovo V520-15IKL', status:'active'},
+  {id:20, type:'Desktop', name:'Lenovo V530s-07ICB', status:'active'},
+  {id:21, type:'Desktop', name:'Lenovo ThinkCentre M93p', status:'active'},
+  {id:22, type:'Desktop', name:'Lenovo M83 (ThinkCentre) M-10AH', status:'active'},
+  {id:23, type:'Desktop', name:'Lenovo E73 ThinkCentre - Type 10AS', status:'active'},
+  {id:24, type:'Desktop', name:'Lenovo ThinkCentre', status:'active'},
+  {id:25, type:'Desktop', name:'Lenovo S510', status:'active'},
+  {id:26, type:'Desktop', name:'Acer Veriton', status:'active'},
+  {id:27, type:'Desktop', name:'Acer Veriton-IC6879', status:'active'},
+  {id:28, type:'Desktop', name:'Assemble / Customized Desktop', status:'active'},
+  {id:29, type:'Laptop', name:'Dell Latitude 3400', status:'active'},
+  {id:30, type:'Laptop', name:'Dell Latitude 3410 BTX', status:'active'},
+  {id:31, type:'Laptop', name:'Dell Latitude 3330', status:'active'},
+  {id:32, type:'Laptop', name:'Dell Latitude 5580', status:'active'},
+  {id:33, type:'Laptop', name:'Dell Latitude E5440', status:'active'},
+  {id:34, type:'Laptop', name:'Dell Latitude E7280', status:'active'},
+  {id:35, type:'Laptop', name:'Dell Latitude E7480', status:'active'},
+  {id:36, type:'Laptop', name:'Dell Vostro 3401', status:'active'},
+  {id:37, type:'Laptop', name:'Dell Inspiron 5370', status:'active'},
+  {id:38, type:'Laptop', name:'HP EliteBook 840 G1', status:'active'},
+  {id:39, type:'Laptop', name:'HP EliteBook 840 G3', status:'active'},
+  {id:40, type:'Laptop', name:'HP EliteBook Folio 9480m', status:'active'},
+  {id:41, type:'Laptop', name:'HP EliteBook 645 G9', status:'active'},
+  {id:42, type:'Laptop', name:'HP ProBook 640 G1', status:'active'},
+  {id:43, type:'Laptop', name:'HP ProBook 430 G3', status:'active'},
+  {id:44, type:'Laptop', name:'HP Probook 4 G1a', status:'active'},
+  {id:45, type:'Laptop', name:'HP ZBOOK Firefly 14 G11', status:'active'},
+  {id:46, type:'Laptop', name:'HP X360 1030 G2', status:'active'},
+  {id:47, type:'Laptop', name:'HP Spectre Pro X360 G1', status:'active'},
+  {id:48, type:'Laptop', name:'HP Pavilion x360 14-dh1179tu', status:'active'},
+  {id:49, type:'Laptop', name:'HP Pavilion X360 2in1', status:'active'},
+  {id:50, type:'Laptop', name:'HP ENVY x360 13-ay0045au', status:'active'},
+  {id:51, type:'Laptop', name:'HP Laptop PC 14-d2000', status:'active'},
+  {id:52, type:'Laptop', name:'HP Laptop 14s-dq2535TU', status:'active'},
+  {id:53, type:'Laptop', name:'HP 240 G3', status:'active'},
+  {id:54, type:'Laptop', name:'HP 240 G5', status:'active'},
+  {id:55, type:'Laptop', name:'HP 240 G6', status:'active'},
+  {id:56, type:'Laptop', name:'HP 240 G7', status:'active'},
+  {id:57, type:'Laptop', name:'HP 240 G8', status:'active'},
+  {id:58, type:'Laptop', name:'HP 245 G6', status:'active'},
+  {id:59, type:'Laptop', name:'HP 250 G8', status:'active'},
+  {id:60, type:'Laptop', name:'HP Notebook 14-ck2018tu', status:'active'},
+  {id:61, type:'Laptop', name:'HP Victus 15-fb3185ax', status:'active'},
+  {id:62, type:'Laptop', name:'Lenovo V14-IKB Type 81YA', status:'active'},
+  {id:63, type:'Laptop', name:'Lenovo V14 G2 ITL', status:'active'},
+  {id:64, type:'Laptop', name:'Lenovo V14 G3 IAP', status:'active'},
+  {id:65, type:'Laptop', name:'Lenovo V14-82C4A00LIH', status:'active'},
+  {id:66, type:'Laptop', name:'Lenovo V14-82KA00CHIH', status:'active'},
+  {id:67, type:'Laptop', name:'Lenovo V15 G2-ITL 82KB00JEIH', status:'active'},
+  {id:68, type:'Laptop', name:'Lenovo V15 IIL 82C500WXIH', status:'active'},
+  {id:69, type:'Laptop', name:'Lenovo V130-15IKB Type 81HN', status:'active'},
+  {id:70, type:'Laptop', name:'Lenovo V130-14IKB Type 81HQ', status:'active'},
+  {id:71, type:'Laptop', name:'Lenovo ThinkPad L450 - Type 20DS', status:'active'},
+  {id:72, type:'Laptop', name:'Lenovo ThinkPad E14', status:'active'},
+  {id:73, type:'Laptop', name:'Lenovo ThinkBook 15 G5 ABP', status:'active'},
+  {id:74, type:'Laptop', name:'Lenovo ThinkBook 16 G6 ABP - Type 21KK', status:'active'},
+  {id:75, type:'Laptop', name:'Lenovo Yoga Slim 7-14IIL05 - Type 82A1', status:'active'},
+  {id:76, type:'Laptop', name:'Lenovo Yoga 6 Slim 83B2006BIN', status:'active'},
+  {id:77, type:'Laptop', name:'Lenovo IdeaPad 3-15IML05 - Type 81WB', status:'active'},
+  {id:78, type:'Laptop', name:'Lenovo IdeaPad S340-14IIL - Type 81VV', status:'active'},
+  {id:79, type:'Laptop', name:'Lenovo 1115G4', status:'active'},
+  {id:80, type:'Laptop', name:'Lenovo 1135G7', status:'active'},
+  {id:81, type:'Laptop', name:'Asus P1440FA-5810', status:'active'},
+  {id:82, type:'Laptop', name:'Asus P1440FA-FQ1707', status:'active'},
+  {id:83, type:'Laptop', name:'Asus B1402CBA', status:'active'},
+  {id:84, type:'Laptop', name:'Asus B1502CVA-N3021', status:'active'},
+  {id:85, type:'Laptop', name:'Acer TMP214-52-58QS', status:'active'},
+  {id:86, type:'Laptop', name:'Acer TravelMate P414RN-53', status:'active'},
+  {id:87, type:'Laptop', name:'Acer Aspire Lite', status:'active'},
+  {id:88, type:'Laptop', name:'Acer Swift 5 SF514-55TA-53WZ', status:'active'},
+  {id:89, type:'Laptop', name:'Apple MacBook Air', status:'active'},
+  {id:90, type:'Laptop', name:'Apple MacBook Pro', status:'active'},
+  {id:91, type:'Laptop', name:'HP Acer Swift 5', status:'active'},
+  {id:92, type:'Laptop', name:'Laptop (Other)', status:'active'},
+  {id:93, type:'Monitor', name:'Dell E1916HE', status:'active'},
+  {id:94, type:'Monitor', name:'Dell E1916HVF', status:'active'},
+  {id:95, type:'Monitor', name:'Dell E1916Hef', status:'active'},
+  {id:96, type:'Monitor', name:'Dell E1913C', status:'active'},
+  {id:97, type:'Monitor', name:'Dell E1709WC', status:'active'},
+  {id:98, type:'Monitor', name:'Dell E1930F', status:'active'},
+  {id:99, type:'Monitor', name:'Dell 1914HF', status:'active'},
+  {id:100, type:'Monitor', name:'Dell 1920', status:'active'},
+  {id:101, type:'Monitor', name:'Dell 1910', status:'active'},
+  {id:102, type:'Monitor', name:'Dell 1912 HC', status:'active'},
+  {id:103, type:'Monitor', name:'Dell 1930F', status:'active'},
+  {id:104, type:'Monitor', name:'Dell 2418HV', status:'active'},
+  {id:105, type:'Monitor', name:'Dell 2421HN', status:'active'},
+  {id:106, type:'Monitor', name:'Dell LW82', status:'active'},
+  {id:107, type:'Monitor', name:'Dell HF13', status:'active'},
+  {id:108, type:'Monitor', name:'Dell 8092', status:'active'},
+  {id:109, type:'Monitor', name:'Dell P2717H', status:'active'},
+  {id:110, type:'Monitor', name:'Dell 2240', status:'active'},
+  {id:111, type:'Monitor', name:'Dell 7020', status:'active'},
+  {id:112, type:'Monitor', name:'HP V193', status:'active'},
+  {id:113, type:'Monitor', name:'HP V194', status:'active'},
+  {id:114, type:'Monitor', name:'HP V192', status:'active'},
+  {id:115, type:'Monitor', name:'HP LV1911', status:'active'},
+  {id:116, type:'Monitor', name:'HP 191', status:'active'},
+  {id:117, type:'Monitor', name:'HP 3501A', status:'active'},
+  {id:118, type:'Monitor', name:'HP 3711', status:'active'},
+  {id:119, type:'Monitor', name:'HP 5041F', status:'active'},
+  {id:120, type:'Monitor', name:'HP 9851V', status:'active'},
+  {id:121, type:'Monitor', name:'HP 9161A', status:'active'},
+  {id:122, type:'Monitor', name:'HP 71004', status:'active'},
+  {id:123, type:'Monitor', name:'HP Z23i', status:'active'},
+  {id:124, type:'Monitor', name:'Lenovo E2054A', status:'active'},
+  {id:125, type:'Monitor', name:'Lenovo E1922 swD', status:'active'},
+  {id:126, type:'Monitor', name:'Lenovo E1922S', status:'active'},
+  {id:127, type:'Monitor', name:'Lenovo E1972WD', status:'active'},
+  {id:128, type:'Monitor', name:'Lenovo C19-10 - Type 66A0', status:'active'},
+  {id:129, type:'Monitor', name:'Lenovo L197wA', status:'active'},
+  {id:130, type:'Monitor', name:'Lenovo A21238', status:'active'},
+  {id:131, type:'Monitor', name:'Lenovo 2025A', status:'active'},
+  {id:132, type:'Monitor', name:'Lenovo 1952WD', status:'active'},
+  {id:133, type:'Monitor', name:'Lenovo 1951', status:'active'},
+  {id:134, type:'Monitor', name:'Lenovo 1921WA', status:'active'},
+  {id:135, type:'Monitor', name:'Lenovo D186WA', status:'active'},
+  {id:136, type:'Monitor', name:'Acer EV196HQL', status:'active'},
+  {id:137, type:'Monitor', name:'Acer 1916', status:'active'},
+  {id:138, type:'Monitor', name:'Acer 206HQL', status:'active'},
+  {id:139, type:'Monitor', name:'Acer 185W80', status:'active'},
+  {id:140, type:'Monitor', name:'LG W1943C', status:'active'},
+  {id:141, type:'Monitor', name:'LG E1941S', status:'active'},
+  {id:142, type:'Monitor', name:'LG 32MN58HM 32 inch', status:'active'},
+  {id:143, type:'Monitor', name:'LG 24 IPS QHD-24U631A', status:'active'},
+  {id:144, type:'Monitor', name:'AOC E970S', status:'active'},
+  {id:145, type:'Monitor', name:'ViewSonic VS1285', status:'active'},
+  {id:146, type:'Monitor', name:'ViewSonic VA1928', status:'active'},
+  {id:147, type:'Monitor', name:'ViewSonic VS12085', status:'active'},
+  {id:148, type:'Monitor', name:'ViewSonic 13698', status:'active'},
+  {id:149, type:'Monitor', name:'ViewSonic 13208', status:'active'},
+  {id:150, type:'Monitor', name:'Philips 223V5', status:'active'},
+  {id:151, type:'Monitor', name:'Compaq 3571C', status:'active'},
+  {id:152, type:'Monitor', name:'WIPRO TFT185W', status:'active'},
+  {id:153, type:'Monitor', name:'WIPRO 181', status:'active'},
+  {id:154, type:'Monitor', name:'Samsung Monitor', status:'active'},
+  {id:155, type:'Monitor', name:'Assemble / Customized Monitor', status:'active'},
+  {id:156, type:'Printer', name:'HP LaserJet Pro MFP M126nw', status:'active'},
+  {id:157, type:'Printer', name:'HP LaserJet Pro MFP M429FDW', status:'active'},
+  {id:158, type:'Printer', name:'HP Color LaserJet Pro MFP M183FW', status:'active'},
+  {id:159, type:'Printer', name:'HP Color LaserJet Pro MFP 4303fdw', status:'active'},
+  {id:160, type:'Printer', name:'HP LaserJet Pro MFP M227 SDN', status:'active'},
+  {id:161, type:'Printer', name:'HP LaserJet 1020+', status:'active'},
+  {id:162, type:'Printer', name:'HP LaserJet M1136 MFP', status:'active'},
+  {id:163, type:'Printer', name:'HP Colour Jet M181FW', status:'active'},
+  {id:164, type:'Printer', name:'Konica Minolta Bizhub C226', status:'active'},
+  {id:165, type:'Printer', name:'Argox CP-2140', status:'active'},
+  {id:166, type:'Wifi Device', name:'Wifi Ray-R6A-C', status:'active'},
+  {id:167, type:'Wifi Device', name:'Cisco AP-305', status:'active'},
+  {id:168, type:'Wifi Device', name:'Cisco AP-315', status:'active'},
+  {id:169, type:'Wifi Device', name:'Netgear 24-Port GE Managed Switch', status:'active'},
+  {id:170, type:'Wifi Device', name:'DGS-1005A 5 Port Giga Switch', status:'active'},
+  {id:171, type:'Wifi Device', name:'DGS-1008A 8 Port Giga Switch', status:'active'},
+  {id:172, type:'Wifi Device', name:'DGS-1016 16 Port Giga Switch', status:'active'},
+  {id:173, type:'Wifi Device', name:'DellSwitch-N1124T-ON', status:'active'},
+  {id:174, type:'Network Device', name:'Network Device (Other)', status:'active'},
+  {id:175, type:'Television Set', name:'TCL LED Television 55P6K', status:'active'},
+  {id:176, type:'Television Set', name:'TCL LED Television 43S5k', status:'active'},
+  {id:177, type:'Television Set', name:'TCL', status:'active'},
+  {id:178, type:'Television Set', name:'Samsung TV', status:'active'},
+  {id:179, type:'Headphone', name:'Headphone (Standard)', status:'active'},
+  {id:180, type:'USB Headphone', name:'USB Headphone (Standard)', status:'active'}
+];
+let nextModelId = 181;
+let editModelId = null;
+let modelFilter = 'all';
+let modelSearch = '';
+
+const MODEL_TYPE_ICONS = {
+  'Laptop':'ti-device-laptop','Desktop':'ti-desktop','Mobile':'ti-device-mobile',
+  'Server':'ti-server','Tablet':'ti-device-tablet','Mouse':'ti-mouse',
+  'Keyboard':'ti-keyboard','Headphone':'ti-headphones','USB Headphone':'ti-headphones',
+  'Monitor':'ti-device-tv','Wifi Device':'ti-wifi','Network Device':'ti-network',
+  'Network':'ti-network','Printer':'ti-printer','Television Set':'ti-device-tv',
+  'Other':'ti-box',
+};
+const PERIPHERALS = ['Mouse','Keyboard','Headphone','USB Headphone','Monitor'];
+
+function sfModel(btn, val) {
+  modelFilter = val;
+  btn.closest('.fbar').querySelectorAll('.fb').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  renderModels();
+}
+function filterModels(q) {
+  modelSearch = q.toLowerCase();
+  renderModels();
+}
+
+function renderModels() {
+  // Stats
+  const types = [...new Set(ASSET_MODELS.map(m => m.type))];
+  const total = ASSET_MODELS.length;
+  const laptops = ASSET_MODELS.filter(m => m.type === 'Laptop').length;
+  const desktops = ASSET_MODELS.filter(m => m.type === 'Desktop').length;
+  const peripherals = ASSET_MODELS.filter(m => PERIPHERALS.includes(m.type)).length;
+  document.getElementById('model-stats').innerHTML = `
+    <div class="stat" style="--accent-color:#0B63CE"><div class="lbl">Total models</div><div class="num" style="font-family:var(--mono)">${total}</div></div>
+    <div class="stat" style="--accent-color:#0D7C53"><div class="lbl">Laptop models</div><div class="num" style="font-family:var(--mono)">${laptops}</div></div>
+    <div class="stat" style="--accent-color:#00B4B4"><div class="lbl">Desktop models</div><div class="num" style="font-family:var(--mono)">${desktops}</div></div>
+    <div class="stat" style="--accent-color:#7C3AED"><div class="lbl">Peripherals</div><div class="num" style="font-family:var(--mono)">${peripherals}</div></div>`;
+
+  // Filter
+  let list = [...ASSET_MODELS];
+  if (modelFilter !== 'all') {
+    if (modelFilter === 'Peripherals') {
+      list = list.filter(m => PERIPHERALS.includes(m.type));
+    } else {
+      list = list.filter(m => m.type === modelFilter);
+    }
+  }
+  if (modelSearch) list = list.filter(m =>
+    m.name.toLowerCase().includes(modelSearch) ||
+    m.type.toLowerCase().includes(modelSearch) ||
+    (m.brand||'').toLowerCase().includes(modelSearch)
+  );
+
+  const statusConfig = {
+    active: {color:'#0D7C53', bg:'#D1FAE5', label:'Active'},
+    discontinued: {color:'#D97706', bg:'#FEF3C7', label:'Discontinued'},
+    eol: {color:'#DC2626', bg:'#FEE2E2', label:'End of Life'},
+  };
+  const tbody = document.getElementById('model-body');
+  tbody.innerHTML = list.length ? list.map((m, i) => {
+    const icon = MODEL_TYPE_ICONS[m.type] || 'ti-box';
+    const sc = statusConfig[m.status] || statusConfig.active;
+    return `<tr>
+      <td class="mono" style="color:var(--tx3)">${m.id}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:9px;">
+          <div style="width:28px;height:28px;border-radius:6px;background:${sc.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <i class="ti ${icon}" style="font-size:13px;color:${sc.color};"></i>
+          </div>
+          <span style="font-weight:500">${m.name}</span>
+          ${m.notes ? `<i class="ti ti-info-circle" style="font-size:13px;color:var(--tx3);cursor:help;" title="${m.notes}"></i>` : ''}
+        </div>
+      </td>
+      <td><span class="badge" style="background:${sc.bg};color:${sc.color}">${m.type}</span></td>
+      <td><span class="badge" style="background:${sc.bg};color:${sc.color}">${sc.label}</span></td>
+      <td>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-sm btn-amber" onclick="openModelModal(${m.id})"><i class="ti ti-edit"></i> Edit</button>
+          <button class="btn btn-sm btn-red" onclick="deleteModel(${m.id})"><i class="ti ti-trash"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="5"><div class="empty"><i class="ti ti-list-details"></i><p>No models match this filter.</p></div></td></tr>`;
+  
+  // Update asset modal model dropdown too
+  populateAssetModelDropdown();
+}
+
+function openModelModal(id) {
+  editModelId = id;
+  document.getElementById('model-modal-title').textContent = id ? 'Edit model' : 'Add asset model';
+  document.getElementById('mm-save').innerHTML = `<i class="ti ti-check"></i> ${id ? 'Save changes' : 'Add model'}`;
+  if (id) {
+    const m = ASSET_MODELS.find(x => x.id === id);
+    document.getElementById('mm-name').value   = m.name;
+    document.getElementById('mm-type').value   = m.type;
+    document.getElementById('mm-brand').value  = m.brand || '';
+    document.getElementById('mm-status').value = m.status || 'active';
+    document.getElementById('mm-notes').value  = m.notes || '';
+  } else {
+    ['mm-name','mm-brand','mm-notes'].forEach(f => document.getElementById(f).value = '');
+    document.getElementById('mm-type').value   = 'Laptop';
+    document.getElementById('mm-status').value = 'active';
+  }
+  document.getElementById('modal-model').classList.add('open');
+}
+
+function saveModel() {
+  const name = document.getElementById('mm-name').value.trim();
+  const type = document.getElementById('mm-type').value;
+  if (!name || !type) { alert('Model name and type are required.'); return; }
+  const data = {
+    name, type,
+    brand:  document.getElementById('mm-brand').value.trim(),
+    status: document.getElementById('mm-status').value,
+    notes:  document.getElementById('mm-notes').value.trim(),
+  };
+  if (editModelId) {
+    Object.assign(ASSET_MODELS.find(m => m.id === editModelId), data);
+    toast('Model updated.');
+  } else {
+    ASSET_MODELS.push({ id: nextModelId++, ...data });
+    toast('Model added.');
+  }
+  cm('modal-model');
+  if (curPage === 'models') renderModels();
+  populateAssetModelDropdown();
+}
+
+function deleteModel(id) {
+  if (!confirm('Delete this model from the master list?')) return;
+  const idx = ASSET_MODELS.findIndex(m => m.id === id);
+  if (idx > -1) ASSET_MODELS.splice(idx, 1);
+  renderModels();
+  populateAssetModelDropdown();
+  toast('Model deleted.');
+}
+
+function populateAssetModelDropdown() {
+  const sel = document.getElementById('am-model-select');
+  if (!sel) return;
+  const cur = sel.value;
+  const typeFilter = document.getElementById('am-type') ? document.getElementById('am-type').value : 'all';
+  // Group by type
+  const groups = {};
+  ASSET_MODELS.filter(m => m.status === 'active').forEach(m => {
+    if (!groups[m.type]) groups[m.type] = [];
+    groups[m.type].push(m);
+  });
+  let optHtml = '<option value="">— Select model —</option>';
+  Object.entries(groups).forEach(([type, models]) => {
+    optHtml += `<optgroup label="${type}">`;
+    models.forEach(m => {
+      optHtml += `<option value="${m.name}" ${m.name === cur ? 'selected' : ''}>${m.name}</option>`;
+    });
+    optHtml += '</optgroup>';
+  });
+  sel.innerHTML = optHtml;
+}
+
+function onAssetModelSelect(val) {
+  if (!val) return;
+  const m = ASSET_MODELS.find(x => x.name === val);
+  if (!m) return;
+  // Auto-set the asset type to match the model
+  const typeEl = document.getElementById('am-type');
+  if (typeEl) typeEl.value = m.type;
+  // Auto-fill the name field if empty
+  const nameEl = document.getElementById('am-name');
+  if (nameEl && !nameEl.value.trim()) nameEl.value = m.name;
 }
 </script>
 </body>
