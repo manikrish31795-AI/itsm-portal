@@ -1080,11 +1080,54 @@ tbody tr.rc:hover td { background: #EEF4FF; }
           <button class="btn btn-primary" onclick="openAssetModal(null)"><i class="ti ti-plus"></i> Add asset</button>
         </div>
       </div>
-      <div class="stats" id="asset-stats"></div>
-      <div class="card"><table>
-        <thead><tr><th>Asset ID</th><th>Name</th><th>Type</th><th>Assigned to</th><th>Emp ID</th><th>Status</th><th>Last updated</th><th>Actions</th></tr></thead>
-        <tbody id="asset-body"></tbody>
-      </table></div>
+      <!-- Stats always on top -->
+      <div class="stats" id="asset-stats" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px;"></div>
+      <!-- Filter bar -->
+      <div class="fbar">
+        <button class="fb on" onclick="sfAsset(this,'all')">All</button>
+        <button class="fb" onclick="sfAsset(this,'inuse')">In use</button>
+        <button class="fb" onclick="sfAsset(this,'available')">Available</button>
+        <button class="fb" onclick="sfAsset(this,'repair')">In repair</button>
+        <button class="fb" onclick="sfAsset(this,'retired')">Retired</button>
+        <button class="fb" onclick="sfAsset(this,'disposed')">Disposed</button>
+        <div class="sw" style="margin-left:auto;">
+          <i class="ti ti-search"></i>
+          <input type="text" placeholder="Search assets..." oninput="filterAssets(this.value)">
+        </div>
+      </div>
+      <!-- Scrollable table -->
+      <div class="card" style="overflow-x:auto;">
+        <table style="min-width:1400px;">
+          <thead><tr>
+            <th>Asset Tag</th>
+            <th>Model</th>
+            <th>Category</th>
+            <th>Manufacturer</th>
+            <th>Serial No.</th>
+            <th>Order No.</th>
+            <th>Supplier</th>
+            <th>Location</th>
+            <th>City</th>
+            <th>Assigned to</th>
+            <th>Emp No.</th>
+            <th>Username</th>
+            <th>Manager</th>
+            <th>Department</th>
+            <th>Status</th>
+            <th>Warranty</th>
+            <th>Warranty Exp.</th>
+            <th>Value (₹)</th>
+            <th>Alloc. Date</th>
+            <th>Dealloc. Date</th>
+            <th>MAC Address</th>
+            <th>Processor</th>
+            <th>RAM</th>
+            <th>HDD</th>
+            <th>Actions</th>
+          </tr></thead>
+          <tbody id="asset-body"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- ADMIN: Analytics -->
@@ -1143,16 +1186,16 @@ tbody tr.rc:hover td { background: #EEF4FF; }
 
     <!-- ALL ROLES: Location -->
     <div class="page-wrap" id="page-location">
-      <div class="ph">
+      <div class="ph" style="margin-bottom:14px;">
         <div>
           <h2>Office Locations</h2>
           <div style="font-size:12px;color:var(--tx3);margin-top:2px;">View all company offices, data centres, and remote sites</div>
         </div>
       </div>
-      <!-- Location stats -->
-      <div class="stats" id="loc-stats" style="grid-template-columns:repeat(3,1fr);"></div>
-      <!-- Filter bar -->
-      <div class="fbar">
+      <!-- Stats ALWAYS at top -->
+      <div class="stats" id="loc-stats" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px;"></div>
+      <!-- Filter bar below stats -->
+      <div class="fbar" style="margin-bottom:14px;">
         <button class="fb on" onclick="sfLoc(this,'all')">All</button>
         <button class="fb" onclick="sfLoc(this,'office')">Office</button>
         <button class="fb" onclick="sfLoc(this,'datacenter')">Data Centre</button>
@@ -1162,23 +1205,28 @@ tbody tr.rc:hover td { background: #EEF4FF; }
           <input type="text" placeholder="Search locations..." oninput="filterLocations(this.value)">
         </div>
       </div>
-      <!-- Location cards grid -->
+      <!-- Location cards BELOW stats and filters -->
       <div id="loc-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;"></div>
     </div>
 
     <!-- ADMIN ONLY: Manage Locations -->
     <div class="page-wrap" id="page-manage-locations">
-      <div class="ph">
+      <div class="ph" style="margin-bottom:14px;">
         <div>
           <h2>Manage Locations</h2>
           <div style="font-size:12px;color:var(--tx3);margin-top:2px;">Add, edit, and deactivate office locations</div>
         </div>
-        <button class="btn btn-primary" onclick="openLocationModal(null)"><i class="ti ti-map-pin-plus"></i> Add location</button>
+        <div class="ph-r">
+          <button class="btn btn-green" onclick="exportCSV('locations')"><i class="ti ti-download"></i> Export CSV</button>
+          <button class="btn btn-primary" onclick="openLocationModal(null)"><i class="ti ti-map-pin-plus"></i> Add location</button>
+        </div>
       </div>
+      <!-- Summary stats always on top -->
+      <div class="stats" id="manage-loc-stats" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px;"></div>
       <div class="card">
         <table>
           <thead>
-            <tr><th>Name</th><th>Type</th><th>City</th><th>Country</th><th>Head count</th><th>IT contact</th><th>Status</th><th>Actions</th></tr>
+            <tr><th>Name</th><th>Type</th><th>City</th><th>State</th><th>Country</th><th>Head count</th><th>IT contact</th><th>Phone</th><th>Status</th><th>Actions</th></tr>
           </thead>
           <tbody id="manage-loc-body"></tbody>
         </table>
@@ -1424,55 +1472,158 @@ tbody tr.rc:hover td { background: #EEF4FF; }
 
 <!-- ── MODAL: Add/Edit Asset ───────────────────────────────────────────────── -->
 <div class="overlay" id="modal-asset">
-  <div class="modal">
-    <div class="modal-head"><h3 id="am-title">Add asset</h3><button class="btn btn-sm btn-ghost" onclick="cm('modal-asset')"><i class="ti ti-x"></i></button></div>
+  <div class="modal" style="max-width:780px;">
+    <div class="modal-head">
+      <h3 id="am-title">Add asset</h3>
+      <button class="btn btn-sm btn-ghost" onclick="cm('modal-asset')"><i class="ti ti-x"></i></button>
+    </div>
     <div class="modal-body">
-      <div class="fgrid">
-        <div class="fg"><label>Asset ID</label><input type="text" id="am-tag" placeholder="e.g. AST-0150"></div>
-        <div class="fg"><label>Name *</label><input type="text" id="am-name" placeholder="e.g. Dell Latitude 7420"></div>
-        <div class="fg"><label>Type</label><select id="am-type">
-              <optgroup label="Computing">
-                <option>Laptop</option>
-                <option>Desktop</option>
-                <option>Mobile</option>
-                <option>Server</option>
-                <option>Tablet</option>
-              </optgroup>
-              <optgroup label="Peripherals">
-                <option>Mouse</option>
-                <option>Keyboard</option>
-                <option>Headphone</option>
-                <option>USB Headphone</option>
-                <option>Monitor</option>
-              </optgroup>
-              <optgroup label="Network & Connectivity">
-                <option>Wifi Device</option>
-                <option>Network Device</option>
-                <option>Network</option>
-              </optgroup>
-              <optgroup label="Office Equipment">
-                <option>Printer</option>
-                <option>Television Set</option>
-              </optgroup>
-              <optgroup label="Other">
-                <option>Other</option>
-              </optgroup>
-            </select></div>
-        <div class="fg"><label>Assigned to (name)</label><input type="text" id="am-assign" placeholder="Person or location"></div>
-        <div class="fg"><label>Assigned Emp ID</label><input type="text" id="am-empid" placeholder="e.g. EMP-0041"></div>
-        <div class="fg"><label>Status</label><select id="am-status"><option value="inuse">In use</option><option value="available">Available</option><option value="repair">In repair</option><option value="retired">Retired</option></select></div>
-        <div class="fg"><label>Model (from master list)</label>
+
+      <!-- ── SECTION 1: Asset Identification ── -->
+      <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.09em;padding-bottom:8px;border-bottom:2px solid var(--border);margin-bottom:14px;">Asset identification</div>
+      <div class="fgrid" style="margin-bottom:16px;">
+        <div class="fg"><label>Company</label><input type="text" id="am-company" placeholder="e.g. ACME Technologies"></div>
+        <div class="fg"><label>Asset tag *</label><input type="text" id="am-tag" placeholder="e.g. AST-0150"></div>
+        <div class="fg"><label>Model (master list)</label>
           <select id="am-model-select" onchange="onAssetModelSelect(this.value)">
             <option value="">— Select model —</option>
           </select>
         </div>
-        <div class="fg"><label>Serial number</label><input type="text" id="am-serial" placeholder="Optional"></div>
+        <div class="fg"><label>Model No.</label><input type="text" id="am-modelno" placeholder="e.g. 20DS0001IN"></div>
+        <div class="fg"><label>Category / Type *</label>
+          <select id="am-type">
+            <optgroup label="Computing">
+              <option>Laptop</option><option>Desktop</option><option>Mobile</option>
+              <option>Server</option><option>Tablet</option>
+            </optgroup>
+            <optgroup label="Peripherals">
+              <option>Mouse</option><option>Keyboard</option><option>Headphone</option>
+              <option>USB Headphone</option><option>Monitor</option>
+            </optgroup>
+            <optgroup label="Network &amp; Connectivity">
+              <option>Wifi Device</option><option>Network Device</option><option>Network</option>
+            </optgroup>
+            <optgroup label="Office Equipment">
+              <option>Printer</option><option>Television Set</option>
+            </optgroup>
+            <optgroup label="Other"><option>Other</option></optgroup>
+          </select>
+        </div>
+        <div class="fg"><label>Manufacturer</label><input type="text" id="am-manufacturer" placeholder="e.g. Dell, HP, Lenovo"></div>
+        <div class="fg"><label>Serial number</label><input type="text" id="am-serial" placeholder="e.g. SN123456789"></div>
+        <div class="fg"><label>Order number</label><input type="text" id="am-orderno" placeholder="e.g. PO-2024-0042"></div>
+        <div class="fg"><label>Supplier</label><input type="text" id="am-supplier" placeholder="e.g. Ingram Micro India"></div>
+        <div class="fg"><label>MAC address</label><input type="text" id="am-mac" placeholder="e.g. AA:BB:CC:DD:EE:FF"></div>
       </div>
+
+      <!-- ── SECTION 2: Technical Specs ── -->
+      <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.09em;padding-bottom:8px;border-bottom:2px solid var(--border);margin-bottom:14px;">Technical specifications</div>
+      <div class="fgrid" style="margin-bottom:16px;">
+        <div class="fg"><label>Processor</label><input type="text" id="am-processor" placeholder="e.g. Intel Core i5-10210U"></div>
+        <div class="fg"><label>Processor speed</label><input type="text" id="am-procspeed" placeholder="e.g. 2.1 GHz up to 4.2 GHz"></div>
+        <div class="fg"><label>RAM</label><input type="text" id="am-ram" placeholder="e.g. 8 GB"></div>
+        <div class="fg"><label>RAM type</label><input type="text" id="am-ramtype" placeholder="e.g. DDR4 2666 MHz"></div>
+        <div class="fg"><label>HDD / SSD</label><input type="text" id="am-hdd" placeholder="e.g. 512 GB SSD NVMe"></div>
+        <div class="fg"><label>Charger No.</label><input type="text" id="am-charger" placeholder="e.g. CHG-0041"></div>
+      </div>
+
+      <!-- ── SECTION 3: Location ── -->
+      <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.09em;padding-bottom:8px;border-bottom:2px solid var(--border);margin-bottom:14px;">Default location</div>
+      <div class="fgrid" style="margin-bottom:16px;">
+        <div class="fg"><label>Asset default location</label>
+          <select id="am-location">
+            <option value="">— Select location —</option>
+          </select>
+        </div>
+        <div class="fg"><label>City</label><input type="text" id="am-city" placeholder="e.g. Chennai"></div>
+        <div class="fg"><label>State</label><input type="text" id="am-state" placeholder="e.g. Tamil Nadu"></div>
+        <div class="fg"><label>Country</label><input type="text" id="am-country" placeholder="e.g. India"></div>
+      </div>
+
+      <!-- ── SECTION 4: Allocation ── -->
+      <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.09em;padding-bottom:8px;border-bottom:2px solid var(--border);margin-bottom:14px;">Allocation details</div>
+      <div class="fgrid" style="margin-bottom:16px;">
+        <div class="fg"><label>Assigned to (name)</label><input type="text" id="am-assign" placeholder="Person or location"></div>
+        <div class="fg"><label>Employee No.</label><input type="text" id="am-empid" placeholder="e.g. EMP-0041"></div>
+        <div class="fg"><label>Username</label><input type="text" id="am-username" placeholder="e.g. ravi.kumar"></div>
+        <div class="fg"><label>Manager</label><input type="text" id="am-manager" placeholder="e.g. Priya S."></div>
+        <div class="fg"><label>Department</label><input type="text" id="am-dept" placeholder="e.g. Finance"></div>
+        <div class="fg"><label>Allocated date</label><input type="date" id="am-allocdate"></div>
+        <div class="fg"><label>Deallocated date</label><input type="date" id="am-deallocdate"></div>
+      </div>
+
+      <!-- ── SECTION 5: Status & Financial ── -->
+      <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.09em;padding-bottom:8px;border-bottom:2px solid var(--border);margin-bottom:14px;">Status, warranty &amp; value</div>
+      <div class="fgrid" style="margin-bottom:16px;">
+        <div class="fg"><label>Status *</label>
+          <select id="am-status">
+            <option value="inuse">In use</option>
+            <option value="available">Available</option>
+            <option value="repair">In repair</option>
+            <option value="retired">Retired</option>
+            <option value="stolen">Stolen / Lost</option>
+            <option value="disposed">Disposed</option>
+          </select>
+        </div>
+        <div class="fg"><label>Warranty</label><input type="text" id="am-warranty" placeholder="e.g. 3 Years On-site"></div>
+        <div class="fg"><label>Warranty expires</label><input type="date" id="am-warrantyexp"></div>
+        <div class="fg"><label>Asset value (₹)</label><input type="number" id="am-value" placeholder="e.g. 72000" min="0"></div>
+        <div class="fg"><label>Next audit date</label><input type="date" id="am-nextaudit"></div>
+        <div class="fg"><label>Last audit date</label><input type="date" id="am-lastaudit"></div>
+      </div>
+
     </div>
-    <div class="modal-foot"><button class="btn btn-ghost" onclick="cm('modal-asset')">Cancel</button><button class="btn btn-primary" id="am-save" onclick="saveAsset()"><i class="ti ti-check"></i> Save asset</button></div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="cm('modal-asset')">Cancel</button>
+      <button class="btn btn-primary" id="am-save" onclick="saveAsset()"><i class="ti ti-check"></i> Save asset</button>
+    </div>
   </div>
 </div>
 
+<!-- ── MODAL: Add/Edit Location ──────────────────────────────────────────────── -->
+<div class="overlay" id="modal-location">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="loc-modal-title">Add location</h3>
+      <button class="btn btn-sm btn-ghost" onclick="cm('modal-location')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="fgrid">
+        <div class="fg full"><label>Location name *</label><input type="text" id="lm-name" placeholder="e.g. Chennai Head Office"></div>
+        <div class="fg"><label>Type *</label>
+          <select id="lm-type">
+            <option value="office">Office</option>
+            <option value="datacenter">Data Centre</option>
+            <option value="remote">Remote Site</option>
+          </select>
+        </div>
+        <div class="fg"><label>City *</label><input type="text" id="lm-city" placeholder="e.g. Chennai"></div>
+        <div class="fg"><label>State / Province</label><input type="text" id="lm-state" placeholder="e.g. Tamil Nadu"></div>
+        <div class="fg"><label>Country *</label><input type="text" id="lm-country" placeholder="e.g. India"></div>
+        <div class="fg"><label>Postal / ZIP code</label><input type="text" id="lm-zip" placeholder="e.g. 600001"></div>
+        <div class="fg full"><label>Address</label><input type="text" id="lm-address" placeholder="e.g. No. 42, Anna Salai, Teynampet"></div>
+        <div class="fg"><label>Head count</label><input type="number" id="lm-headcount" placeholder="e.g. 120" min="0"></div>
+        <div class="fg"><label>IT contact name</label><input type="text" id="lm-itcontact" placeholder="e.g. Priya S."></div>
+        <div class="fg"><label>IT contact email</label><input type="email" id="lm-itemail" placeholder="e.g. priya.s@company.com"></div>
+        <div class="fg"><label>Phone / ext</label><input type="text" id="lm-phone" placeholder="e.g. +91-44-1234-5678"></div>
+        <div class="fg"><label>Status</label>
+          <select id="lm-status">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="construction">Under construction</option>
+          </select>
+        </div>
+        <div class="fg full"><label>Notes</label><textarea id="lm-notes" placeholder="Any additional information about this location..." style="min-height:60px;"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="cm('modal-location')">Cancel</button>
+      <button class="btn btn-primary" id="lm-save" onclick="saveLocation()"><i class="ti ti-check"></i> Save location</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL: Add/Edit Asset ───────────────────────────────────────────────── -->
 <!-- ── MODAL: KB Article ───────────────────────────────────────────────────── -->
 <div class="overlay" id="modal-kb">
   <div class="modal wide">
@@ -2166,54 +2317,156 @@ async function doAppr(id,action){
 }
 
 // ── ASSETS ────────────────────────────────────────────────────────────────────
+let assetStatusFilter='all';
+let assetSearchQ='';
+function sfAsset(btn,val){
+  assetStatusFilter=val;
+  btn.closest('.fbar').querySelectorAll('.fb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderAssets();
+}
+function filterAssets(q){assetSearchQ=q.toLowerCase();renderAssets();}
 function renderAssets(){
-  const sLbl={inuse:'In use',available:'Available',repair:'In repair',retired:'Retired'};
-  const sBdg={inuse:'b-res',available:'b-open',repair:'b-inp',retired:'b-closed'};
+  const sLbl={inuse:'In use',available:'Available',repair:'In repair',retired:'Retired',stolen:'Stolen/Lost',disposed:'Disposed'};
+  const sBdg={inuse:'b-res',available:'b-open',repair:'b-inp',retired:'b-closed',stolen:'b-crit',disposed:'b-closed'};
+  const today=new Date(); const soon=new Date(today); soon.setDate(soon.getDate()+90);
+  const total=ASSETS.length;
+  const inuse=ASSETS.filter(a=>a.status==='inuse').length;
+  const repair=ASSETS.filter(a=>a.status==='repair').length;
+  const avail=ASSETS.filter(a=>a.status==='available').length;
+  const warnExp=ASSETS.filter(a=>{if(!a.warrantyExp)return false;const d=new Date(a.warrantyExp);return d>=today&&d<=soon;}).length;
   document.getElementById('asset-stats').innerHTML=`
-    <div class="stat" style="--accent-color:var(--cyan)"><div class="lbl">Total</div><div class="num">${ASSETS.length}</div></div>
-    <div class="stat" style="--accent-color:var(--green)"><div class="lbl">In use</div><div class="num">${ASSETS.filter(a=>a.status==='inuse').length}</div></div>
-    <div class="stat" style="--accent-color:var(--amber)"><div class="lbl">In repair</div><div class="num">${ASSETS.filter(a=>a.status==='repair').length}</div></div>
-    <div class="stat" style="--accent-color:var(--tx3)"><div class="lbl">Available</div><div class="num">${ASSETS.filter(a=>a.status==='available').length}</div></div>`;
-  document.getElementById('asset-body').innerHTML=ASSETS.map(a=>`<tr>
+    <div class="stat" style="--accent-color:#0B63CE"><div class="lbl">Total assets</div><div class="num" style="font-family:var(--mono)">${total}</div></div>
+    <div class="stat" style="--accent-color:#0D7C53"><div class="lbl">In use</div><div class="num" style="font-family:var(--mono)">${inuse}</div></div>
+    <div class="stat" style="--accent-color:#D97706"><div class="lbl">In repair</div><div class="num" style="font-family:var(--mono)">${repair}</div></div>
+    <div class="stat" style="--accent-color:#00B4B4"><div class="lbl">Available</div><div class="num" style="font-family:var(--mono)">${avail}</div>
+    ${warnExp>0?`<div style="font-size:10px;color:#DC2626;margin-top:4px;">⚠ ${warnExp} expiring soon</div>`:''}</div>`;
+  let list=[...ASSETS];
+  if(assetStatusFilter!=='all')list=list.filter(a=>a.status===assetStatusFilter);
+  if(assetSearchQ)list=list.filter(a=>[a.tag,a.name,a.model,a.serial,a.assignedTo,a.assignedEmpId,a.username,a.location,a.type,a.manufacturer,a.dept].some(v=>(v||'').toLowerCase().includes(assetSearchQ)));
+  const EMPTY='—';
+  const cell=(v,cls='')=>`<td class="mono" style="font-size:11px;color:var(--tx2);white-space:nowrap;${cls}">${v||EMPTY}</td>`;
+  document.getElementById('asset-body').innerHTML=list.length?list.map(a=>`<tr class="rc" onclick="openAssetModal(${a.id})">
     <td><span class="atag">${a.tag}</span></td>
-    <td style="font-weight:500">${a.name}</td>
-    <td style="color:var(--tx2)">${a.type}</td>
-    <td>${a.assignedTo||'—'}</td>
-    <td class="mono" style="font-size:10px;color:var(--tx3)">${a.assignedEmpId||'—'}</td>
+    <td style="font-weight:600;font-size:12px;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis">${a.model||a.name||EMPTY}</td>
+    <td><span class="badge b-med" style="font-size:10px;white-space:nowrap">${a.type||EMPTY}</span></td>
+    ${cell(a.manufacturer)}
+    ${cell(a.serial)}
+    ${cell(a.orderNo)}
+    ${cell(a.supplier,'max-width:120px;overflow:hidden;text-overflow:ellipsis')}
+    ${cell(a.location)}
+    ${cell(a.city)}
+    <td style="font-weight:500;font-size:12px;white-space:nowrap">${a.assignedTo||EMPTY}</td>
+    ${cell(a.assignedEmpId)}
+    ${cell(a.username)}
+    ${cell(a.manager)}
+    ${cell(a.dept)}
     <td><span class="badge ${sBdg[a.status]||'b-closed'}">${sLbl[a.status]||a.status}</span></td>
-    <td class="mono" style="color:var(--tx3)">${a.updated}</td>
-    <td><button class="btn btn-sm btn-amber" onclick="openAssetModal(${a.id})"><i class="ti ti-edit"></i> Edit</button></td>
-  </tr>`).join('');
+    ${cell(a.warranty)}
+    <td class="mono" style="font-size:11px;color:${(a.warrantyExp&&new Date(a.warrantyExp)<=soon)?'#DC2626':'var(--tx2)'};">${a.warrantyExp||EMPTY}</td>
+    ${cell(a.value?'₹'+Number(a.value).toLocaleString('en-IN'):'')}
+    ${cell(a.allocDate)}
+    ${cell(a.deallocDate)}
+    ${cell(a.mac)}
+    ${cell(a.processor,'max-width:140px;overflow:hidden;text-overflow:ellipsis')}
+    ${cell(a.ram)}
+    ${cell(a.hdd)}
+    <td onclick="event.stopPropagation()"><button class="btn btn-sm btn-amber" onclick="openAssetModal(${a.id})"><i class="ti ti-edit"></i> Edit</button></td>
+  </tr>`).join(''):`<tr><td colspan="25"><div class="empty"><i class="ti ti-device-laptop"></i><p>No assets match this filter.</p></div></td></tr>`;
 }
 function openAssetModal(id){
   editAssetId=id;
-  document.getElementById('am-title').textContent=id?'Edit asset':'Add asset';
+  document.getElementById('am-title').textContent=id?'Edit asset — '+(ASSETS.find(x=>x.id===id)||{}).tag:'Add asset';
   document.getElementById('am-save').innerHTML=`<i class="ti ti-check"></i> ${id?'Save changes':'Add asset'}`;
+  const allFields=['am-tag','am-company','am-modelno','am-manufacturer','am-serial','am-orderno','am-supplier','am-mac',
+    'am-processor','am-procspeed','am-ram','am-ramtype','am-hdd','am-charger',
+    'am-city','am-state','am-country','am-assign','am-empid','am-username','am-manager','am-dept',
+    'am-allocdate','am-deallocdate','am-warranty','am-warrantyexp','am-value','am-nextaudit','am-lastaudit'];
   if(id){
     const a=ASSETS.find(x=>x.id===id);
-    document.getElementById('am-tag').value=a.tag;
-    document.getElementById('am-name').value=a.name;
-    document.getElementById('am-type').value=a.type;
-    document.getElementById('am-assign').value=a.assignedTo||'';
-    document.getElementById('am-empid').value=a.assignedEmpId||'';
-    document.getElementById('am-status').value=a.status;
+    // Text/number fields
+    const fieldMap={
+      'am-tag':a.tag,'am-company':a.company,'am-modelno':a.modelNo,'am-manufacturer':a.manufacturer,
+      'am-serial':a.serial,'am-orderno':a.orderNo,'am-supplier':a.supplier,'am-mac':a.mac,
+      'am-processor':a.processor,'am-procspeed':a.procSpeed,'am-ram':a.ram,'am-ramtype':a.ramType,
+      'am-hdd':a.hdd,'am-charger':a.charger,
+      'am-city':a.city,'am-state':a.state,'am-country':a.country,
+      'am-assign':a.assignedTo,'am-empid':a.assignedEmpId,'am-username':a.username,
+      'am-manager':a.manager,'am-dept':a.dept,
+      'am-allocdate':a.allocDate,'am-deallocdate':a.deallocDate,
+      'am-warranty':a.warranty,'am-warrantyexp':a.warrantyExp,'am-value':a.value,
+      'am-nextaudit':a.nextAudit,'am-lastaudit':a.lastAudit
+    };
+    Object.entries(fieldMap).forEach(([f,v])=>{const el=document.getElementById(f);if(el)el.value=v||'';});
+    document.getElementById('am-type').value=a.type||'Laptop';
+    document.getElementById('am-status').value=a.status||'inuse';
     if(document.getElementById('am-model-select'))document.getElementById('am-model-select').value=a.model||'';
-    document.getElementById('am-serial').value=a.serial||'';
+    // Populate location dropdown then set value
+    populateAssetLocationDropdown();
+    if(document.getElementById('am-location'))document.getElementById('am-location').value=a.location||'';
   }else{
-    ['am-tag','am-name','am-assign','am-empid','am-serial'].forEach(f=>document.getElementById(f).value='');
+    allFields.forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
     document.getElementById('am-type').value='Laptop';
-    if(document.getElementById('am-model-select'))document.getElementById('am-model-select').value='';
     document.getElementById('am-status').value='inuse';
+    if(document.getElementById('am-model-select'))document.getElementById('am-model-select').value='';
+    populateAssetLocationDropdown();
   }
   populateAssetModelDropdown();
   document.getElementById('modal-asset').classList.add('open');
 }
+function populateAssetLocationDropdown(){
+  const sel=document.getElementById('am-location');if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">— Select location —</option>'+
+    LOCATIONS.filter(l=>l.status==='active').map(l=>
+      `<option value="${l.name}" ${l.name===cur?'selected':''}>${l.name} (${l.city})</option>`
+    ).join('');
+}
 async function saveAsset(){
   const tag=document.getElementById('am-tag').value.trim();
-  const name=document.getElementById('am-name').value.trim();
-  if(!name){alert('Asset name is required.');return;}
   const modelSel=document.getElementById('am-model-select');
-  const data={tag:tag||'AST-'+String(nextAssetId).padStart(4,'0'),name,type:document.getElementById('am-type').value,model:modelSel?modelSel.value:'',assignedTo:document.getElementById('am-assign').value||'—',assignedEmpId:document.getElementById('am-empid').value||'',status:document.getElementById('am-status').value,serial:document.getElementById('am-serial').value,updated:nows()};
+  const selectedModel=modelSel?modelSel.value:'';
+  // Asset name = model name if model selected, else tag
+  const nameFromModel=selectedModel||tag||'Asset';
+  if(!tag){alert('Asset tag is required.');return;}
+  const g=id=>document.getElementById(id)?document.getElementById(id).value.trim():'';
+  const data={
+    tag:tag,
+    name:nameFromModel,
+    company:g('am-company'),
+    model:selectedModel,
+    modelNo:g('am-modelno'),
+    type:document.getElementById('am-type').value,
+    manufacturer:g('am-manufacturer'),
+    serial:g('am-serial'),
+    orderNo:g('am-orderno'),
+    supplier:g('am-supplier'),
+    mac:g('am-mac'),
+    processor:g('am-processor'),
+    procSpeed:g('am-procspeed'),
+    ram:g('am-ram'),
+    ramType:g('am-ramtype'),
+    hdd:g('am-hdd'),
+    charger:g('am-charger'),
+    location:g('am-location'),
+    city:g('am-city'),
+    state:g('am-state'),
+    country:g('am-country'),
+    assignedTo:g('am-assign')||'—',
+    assignedEmpId:g('am-empid'),
+    username:g('am-username'),
+    manager:g('am-manager'),
+    dept:g('am-dept'),
+    allocDate:g('am-allocdate'),
+    deallocDate:g('am-deallocdate'),
+    status:document.getElementById('am-status').value,
+    warranty:g('am-warranty'),
+    warrantyExp:g('am-warrantyexp'),
+    value:g('am-value'),
+    nextAudit:g('am-nextaudit'),
+    lastAudit:g('am-lastaudit'),
+    updated:nows(),
+  };
   if(editAssetId){
     Object.assign(ASSETS.find(a=>a.id===editAssetId),data);
     await dbUpdateAsset(ASSETS.find(a=>a.id===editAssetId));
@@ -2655,7 +2908,7 @@ function sf(btn,scope,val){filt[scope]=val;btn.closest('.fbar').querySelectorAll
 function exportCSV(type){
   let rows,fn;
   if(type==='tickets'){rows=[['ID','Subject','Type','Category','Asset ID','Asset Name','Requester','Emp ID','Assignee','Priority','Status','SLA','Created'],...TICKETS.map(t=>[t.id,t.subject,t.ticketType||'incident',t.category,t.assetTag,t.assetName,t.requester,t.requesterEmpId||'',t.assignee,t.priority,t.status,t.sla,t.created])];fn='tickets.csv';}
-  else if(type==='assets'){rows=[['Asset ID','Name','Type','Assigned To','Emp ID','Status','Serial','Updated'],...ASSETS.map(a=>[a.tag,a.name,a.type,a.assignedTo,a.assignedEmpId||'',a.status,a.serial||'',a.updated])];fn='assets.csv';}
+  else if(type==='assets'){rows=[['Asset Tag','Model','Category','Serial','Order No','Supplier','Company','Manufacturer','MAC','Processor','Proc Speed','RAM','RAM Type','HDD','Charger','Location','City','State','Country','Assigned To','Emp ID','Username','Manager','Dept','Alloc Date','Dealloc Date','Status','Warranty','Warranty Exp','Value','Next Audit','Last Audit','Last Updated'],...ASSETS.map(a=>[a.tag,a.model||'',a.type,a.serial||'',a.orderNo||'',a.supplier||'',a.company||'',a.manufacturer||'',a.mac||'',a.processor||'',a.procSpeed||'',a.ram||'',a.ramType||'',a.hdd||'',a.charger||'',a.location||'',a.city||'',a.state||'',a.country||'',a.assignedTo||'',a.assignedEmpId||'',a.username||'',a.manager||'',a.dept||'',a.allocDate||'',a.deallocDate||'',a.status,a.warranty||'',a.warrantyExp||'',a.value||'',a.nextAudit||'',a.lastAudit||'',a.updated])];fn='assets_full.csv';}
   else if(type==='approvals'){rows=[['ID','Title','Type','Urgency','Description'],...APPROVALS.map(a=>[a.id,a.title,a.type,a.urgency,a.desc])];fn='approvals.csv';}
   else if(type==='loc-report'){
     const locMap2={};
@@ -2663,6 +2916,7 @@ function exportCSV(type){
     rows=[['Location','Total','Open','In Progress','Resolved','Closed','SLA Breaches'],...Object.values(locMap2).map(l=>[l.name,l.total,l.open,l.inprogress,l.resolved,l.closed,l.breach])];
     fn='location_report.csv';
   }
+  else if(type==='locations'){rows=[['Name','Type','City','State','Country','Head count','IT Contact','IT Email','Phone','Status','Notes'],...LOCATIONS.map(l=>[l.name,l.type,l.city,l.state||'',l.country,l.headcount||0,l.itContact||'',l.itEmail||'',l.phone||'',l.status,l.notes||''])];fn='locations.csv';}
   else{rows=[['Metric','Value'],['Tickets this month','186'],['CSAT','4.6'],['FCR','68%'],['Reopen rate','4.2%']];fn='analytics.csv';}
   const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=fn;a.click();
@@ -2772,13 +3026,26 @@ function renderLocations() {
 function renderManageLocations() {
   const tc = LOC_TYPE_CONFIG;
   const sc = LOC_STATUS_CONFIG;
+  // Stats at top
+  const total=LOCATIONS.length;
+  const active=LOCATIONS.filter(l=>l.status==='active').length;
+  const offices=LOCATIONS.filter(l=>l.type==='office').length;
+  const dcs=LOCATIONS.filter(l=>l.type==='datacenter').length;
+  const manageStats=document.getElementById('manage-loc-stats');
+  if(manageStats)manageStats.innerHTML=`
+    <div class="stat" style="--accent-color:#0B63CE"><div class="lbl">Total locations</div><div class="num" style="font-family:var(--mono)">${total}</div></div>
+    <div class="stat" style="--accent-color:#0D7C53"><div class="lbl">Active</div><div class="num" style="font-family:var(--mono)">${active}</div></div>
+    <div class="stat" style="--accent-color:#00B4B4"><div class="lbl">Offices</div><div class="num" style="font-family:var(--mono)">${offices}</div></div>
+    <div class="stat" style="--accent-color:#7C3AED"><div class="lbl">Data centres</div><div class="num" style="font-family:var(--mono)">${dcs}</div></div>`;
   document.getElementById('manage-loc-body').innerHTML = LOCATIONS.map(l => `<tr>
     <td style="font-weight:600">${l.name}</td>
     <td><span class="badge" style="background:${(tc[l.type]||tc.office).color}18;color:${(tc[l.type]||tc.office).color}">${(tc[l.type]||tc.office).label}</span></td>
     <td>${l.city}</td>
+    <td>${l.state||'—'}</td>
     <td>${l.country}</td>
-    <td style="font-family:var(--mono)">${l.headcount || '—'}</td>
+    <td class="mono" style="font-size:11px">${l.headcount || '—'}</td>
     <td>${l.itContact || '—'}</td>
+    <td style="font-size:11px;color:var(--tx2)">${l.phone||'—'}</td>
     <td><span class="badge" style="background:${(sc[l.status]||sc.active).color}18;color:${(sc[l.status]||sc.active).color}">${(sc[l.status]||sc.active).label}</span></td>
     <td>
       <div style="display:flex;gap:6px;">
