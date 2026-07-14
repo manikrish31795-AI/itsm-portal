@@ -4384,3 +4384,1364 @@ const _origSaveAlloc = typeof saveAlloc === 'function' ? saveAlloc : null;
 </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ITAM — Asset Management</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{
+  --bg:#F0F4FC;--s0:#fff;--s1:#F5F7FD;--s2:#EBF0FA;
+  --b1:#D0DBF0;--b2:#B8C8E8;
+  --primary:#0B63CE;--prim-dim:rgba(11,99,206,.10);
+  --teal:#0BA5A4;--teal-dim:rgba(11,165,164,.10);
+  --navy:#0B2D5E;
+  --tx1:#0D1B3E;--tx2:#4A5E82;--tx3:#8A9ABB;
+  --green:#059669;--green-dim:rgba(5,150,105,.10);
+  --amber:#D97706;--amber-dim:rgba(217,119,6,.10);
+  --red:#DC2626;--red-dim:rgba(220,38,38,.10);
+  --purple:#7C3AED;--purple-dim:rgba(124,58,237,.10);
+  --r:7px;--rl:12px;
+  --font:'Inter',-apple-system,sans-serif;--mono:'JetBrains Mono',monospace;
+  --sh:0 1px 4px rgba(13,27,62,.07),0 4px 12px rgba(13,27,62,.05);
+  --sh-md:0 4px 20px rgba(13,27,62,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--tx1);font-size:13px;-webkit-font-smoothing:antialiased;}
+button,input,select,textarea{font-family:var(--font);font-size:13px;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary)!important;box-shadow:0 0 0 3px var(--prim-dim);}
+::placeholder{color:var(--tx3);}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── SHELL ── */
+#app{display:flex;height:100vh;overflow:hidden;}
+
+/* ── SIDEBAR ── */
+.sb{width:220px;min-width:220px;background:linear-gradient(180deg,#0B2D5E,#0D3870 55%,#0F448A);display:flex;flex-direction:column;box-shadow:3px 0 16px rgba(11,45,94,.2);}
+.sb-logo{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px;cursor:pointer;}
+.sb-logo-ic{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--primary));display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(11,165,164,.4);flex-shrink:0;}
+.sb-logo-ic .ti{font-size:18px;color:#fff;}
+.sb-logo-txt h2{font-size:14px;font-weight:700;color:#fff;letter-spacing:-.01em;}
+.sb-logo-txt p{font-size:9px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.1em;}
+.sb-nav{flex:1;padding:8px 0;overflow-y:auto;}
+.sb-sec{padding:8px 16px 3px;font-size:9px;font-weight:700;color:rgba(255,255,255,.28);text-transform:uppercase;letter-spacing:.12em;}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 12px;margin:1px 8px;border-radius:var(--r);font-size:12px;color:rgba(255,255,255,.62);cursor:pointer;border:none;background:none;width:calc(100% - 16px);text-align:left;transition:all .12s;position:relative;}
+.sb-item:hover{background:rgba(255,255,255,.09);color:#fff;}
+.sb-item.active{background:rgba(255,255,255,.15);color:#fff;font-weight:600;}
+.sb-item.active::before{content:'';position:absolute;left:-8px;top:18%;height:64%;width:3px;background:linear-gradient(to bottom,var(--teal),var(--primary));border-radius:0 2px 2px 0;}
+.sb-item .ti{font-size:16px;flex-shrink:0;opacity:.8;}
+.sb-item.active .ti{opacity:1;color:var(--teal);}
+.sb-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;font-weight:700;}
+.sb-footer{padding:12px;border-top:1px solid rgba(255,255,255,.08);}
+.sb-back{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border-radius:var(--r);border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.55);font-size:12px;cursor:pointer;transition:all .12s;}
+.sb-back:hover{background:rgba(255,255,255,.08);color:#fff;}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{background:var(--s0);border-bottom:1px solid var(--b1);padding:0 24px;height:52px;display:flex;align-items:center;gap:12px;flex-shrink:0;box-shadow:0 1px 6px rgba(13,27,62,.06);}
+.topbar-title{font-size:15px;font-weight:700;color:var(--navy);flex:1;}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.content{flex:1;overflow-y:auto;padding:22px 24px;}
+
+/* ── PAGE HEADER ── */
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+.ph-left h2{font-size:17px;font-weight:700;color:var(--navy);}
+.ph-left p{font-size:12px;color:var(--tx3);margin-top:2px;}
+.ph-right{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* ── STATS ── */
+.stats-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--s0);border:1px solid var(--b1);border-radius:var(--rl);padding:14px 16px;position:relative;overflow:hidden;box-shadow:var(--sh);transition:transform .15s,box-shadow .15s;}
+.stat-card:hover{transform:translateY(-1px);box-shadow:var(--sh-md);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ac,var(--b1));}
+.stat-card::after{content:'';position:absolute;top:-8px;right:-8px;width:56px;height:56px;background:var(--ac,var(--b1));opacity:.07;border-radius:50%;}
+.stat-ic{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
+.stat-ic .ti{font-size:16px;}
+.stat-n{font-size:22px;font-weight:700;color:var(--navy);font-family:var(--mono);line-height:1;}
+.stat-l{font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.07em;margin-top:4px;}
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.search-box{position:relative;flex:1;min-width:200px;max-width:300px;}
+.search-box .ti{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tx3);font-size:15px;}
+.search-box input{width:100%;padding:7px 12px 7px 32px;border-radius:var(--r);border:1.5px solid var(--b1);background:var(--s0);color:var(--tx1);font-size:12px;}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;}
+.filter-sel{padding:6px 10px;border-radius:var(--r);border:1.5px solid var(--b1);background:var(--s0);color:var(--tx2);font-size:12px;cursor:pointer;}
+.filter-sel:focus{border-color:var(--primary)!important;}
+.tb-sep{flex:1;}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--r);border:1.5px solid var(--b2);background:var(--s0);color:var(--tx1);font-size:12px;cursor:pointer;transition:all .12s;font-weight:500;white-space:nowrap;}
+.btn:hover{background:var(--s2);border-color:var(--primary);color:var(--primary);}
+.btn-primary{background:linear-gradient(90deg,var(--teal),var(--primary));border:none;color:#fff;font-weight:700;box-shadow:0 3px 10px rgba(11,165,164,.25);}
+.btn-primary:hover{opacity:.88;color:#fff;box-shadow:0 4px 16px rgba(11,165,164,.35);}
+.btn-sm{padding:4px 10px;font-size:11px;}
+.btn-green{background:var(--green-dim);border-color:rgba(5,150,105,.3);color:var(--green);}
+.btn-green:hover{background:rgba(5,150,105,.18);color:var(--green);}
+.btn-amber{background:var(--amber-dim);border-color:rgba(217,119,6,.3);color:var(--amber);}
+.btn-amber:hover{background:rgba(217,119,6,.18);color:var(--amber);}
+.btn-red{background:var(--red-dim);border-color:rgba(220,38,38,.3);color:var(--red);}
+.btn-red:hover{background:rgba(220,38,38,.18);color:var(--red);}
+.btn-ghost{background:transparent;border-color:var(--b1);color:var(--tx2);}
+.btn-ghost:hover{background:var(--s1);}
+
+/* ── TABLE ── */
+.table-wrap{background:var(--s0);border:1px solid var(--b1);border-radius:var(--rl);overflow:hidden;box-shadow:var(--sh);}
+.table-scroll{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{text-align:left;padding:10px 14px;font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.09em;border-bottom:1px solid var(--b1);background:var(--s1);cursor:pointer;white-space:nowrap;user-select:none;}
+thead th:hover{color:var(--primary);}
+thead th .sort-ic{margin-left:4px;opacity:.4;font-size:10px;}
+thead th.sorted .sort-ic{opacity:1;color:var(--primary);}
+tbody td{padding:10px 14px;border-bottom:1px solid rgba(208,219,240,.5);vertical-align:middle;white-space:nowrap;color:var(--tx1);}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr{cursor:pointer;transition:background .1s;}
+tbody tr:hover td{background:#EFF6FF;}
+tbody tr.selected td{background:#DBEAFE;}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;}
+.bd-avail{background:#D1FAE5;color:#059669;}
+.bd-alloc{background:#DBEAFE;color:#1A8FE3;}
+.bd-maint{background:#FEF3C7;color:#D97706;}
+.bd-retire{background:#F1F5F9;color:#64748B;}
+.bd-stolen{background:#FEE2E2;color:#DC2626;}
+.bd-dispose{background:#F1F5F9;color:#64748B;}
+.bd-pending{background:#EDE9FE;color:#7C3AED;}
+
+/* ── PAGINATION ── */
+.pagination{display:flex;align-items:center;gap:6px;padding:12px 16px;border-top:1px solid var(--b1);background:var(--s1);}
+.pg-btn{min-width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:var(--r);border:1px solid var(--b1);background:var(--s0);color:var(--tx2);font-size:12px;cursor:pointer;transition:all .1s;}
+.pg-btn:hover{border-color:var(--primary);color:var(--primary);}
+.pg-btn.active{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:700;}
+.pg-btn:disabled{opacity:.4;cursor:not-allowed;}
+.pg-info{font-size:11px;color:var(--tx3);margin-left:auto;}
+.pg-size{margin-left:8px;font-size:12px;padding:4px 8px;border-radius:var(--r);border:1px solid var(--b1);background:var(--s0);color:var(--tx1);}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(11,45,94,.35);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(5px);}
+.overlay.open{display:flex;}
+.modal{background:var(--s0);border-radius:var(--rl);border:1px solid var(--b1);width:100%;display:flex;flex-direction:column;box-shadow:var(--sh-md);position:relative;animation:fadeIn .18s ease;}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--teal),var(--primary));border-radius:var(--rl) var(--rl) 0 0;}
+.modal-sm{max-width:520px;max-height:88vh;}
+.modal-md{max-width:700px;max-height:92vh;}
+.modal-lg{max-width:900px;max-height:95vh;}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.modal-head h3{font-size:14px;font-weight:700;color:var(--navy);}
+.modal-body{padding:20px;overflow-y:auto;flex:1;}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--b1);display:flex;gap:8px;justify-content:flex-end;background:var(--s1);border-radius:0 0 var(--rl) var(--rl);}
+
+/* ── FORM ── */
+.form-tabs{display:flex;gap:0;border-bottom:1px solid var(--b1);margin-bottom:18px;flex-wrap:wrap;}
+.form-tab{padding:8px 16px;font-size:12px;font-weight:500;color:var(--tx2);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;transition:all .15s;margin-bottom:-1px;}
+.form-tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:700;}
+.form-section{display:none;}.form-section.active{display:block;animation:fadeIn .15s ease;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.fg{display:flex;flex-direction:column;gap:4px;}
+.fg.full{grid-column:1/-1;}
+.fg label{font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.07em;}
+.fg input,.fg select,.fg textarea{padding:8px 10px;border-radius:var(--r);border:1.5px solid var(--b1);background:var(--s1);color:var(--tx1);transition:all .15s;}
+.fg textarea{resize:vertical;min-height:64px;}
+.fg .ro{background:var(--s2);color:var(--tx2);cursor:not-allowed;}
+.fg .asset-id-display{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--teal);background:var(--teal-dim);border:1.5px solid rgba(11,165,164,.3);padding:8px 12px;border-radius:var(--r);letter-spacing:.06em;}
+.fg input[type=checkbox]{width:16px;height:16px;cursor:pointer;}
+.section-label{font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.09em;padding-bottom:8px;border-bottom:1.5px solid var(--b1);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.section-label .ti{color:var(--primary);}
+
+/* ── ALLOCATION CARD ── */
+.alloc-card{background:var(--s1);border:1.5px solid var(--b1);border-radius:var(--rl);padding:16px;margin-bottom:12px;display:flex;gap:14px;transition:border-color .15s;}
+.alloc-card:hover{border-color:var(--primary);}
+.alloc-card-icon{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--teal),var(--primary));display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.alloc-card-icon .ti{font-size:22px;color:#fff;}
+.alloc-card-body{flex:1;}
+.alloc-card-id{font-family:var(--mono);font-size:11px;color:var(--teal);font-weight:600;}
+.alloc-card-name{font-size:14px;font-weight:600;color:var(--navy);margin:2px 0;}
+.alloc-card-meta{font-size:11px;color:var(--tx2);}
+.alloc-card-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+
+/* ── AUDIT LOG ── */
+.audit-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--b1);}
+.audit-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+.audit-body .ab-action{font-size:12px;font-weight:500;color:var(--navy);}
+.audit-body .ab-meta{font-size:11px;color:var(--tx3);margin-top:2px;}
+
+/* ── IMPORT DROP ZONE ── */
+.drop-zone{border:2px dashed var(--b2);border-radius:var(--rl);padding:32px 20px;text-align:center;cursor:pointer;transition:all .15s;}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--primary);background:var(--prim-dim);}
+.drop-zone .ti{font-size:36px;color:var(--b2);display:block;margin-bottom:10px;}
+.drop-zone.drag .ti{color:var(--primary);}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:52px 20px;color:var(--tx3);}
+.empty .ti{font-size:44px;display:block;margin-bottom:12px;color:var(--b2);}
+.empty p{font-size:14px;font-weight:500;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:22px;right:22px;background:var(--navy);color:#fff;padding:10px 18px;border-radius:var(--r);font-size:12px;font-weight:600;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;box-shadow:var(--sh-md);}
+#toast.show{opacity:1;}
+
+/* ── DETAIL PANEL ── */
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;}
+.dg-item .dk{font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px;}
+.dg-item .dv{font-size:12px;font-weight:500;color:var(--tx1);}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ── SIDEBAR ── -->
+<div class="sb">
+  <div class="sb-logo" onclick="window.location.href='index.html'" title="Back to ServiceDesk">
+    <div class="sb-logo-ic"><i class="ti ti-server-cog"></i></div>
+    <div class="sb-logo-txt"><h2>ITAM</h2><p>Asset Manager</p></div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-sec">Overview</div>
+    <button class="sb-item active" id="si-dashboard" onclick="showPage('dashboard')"><i class="ti ti-layout-dashboard"></i>Dashboard</button>
+    <div class="sb-sec">Assets</div>
+    <button class="sb-item" id="si-inventory" onclick="showPage('inventory')"><i class="ti ti-device-laptop"></i>Asset Inventory<span class="sb-badge" id="inv-badge">0</span></button>
+    <button class="sb-item" id="si-allocation" onclick="showPage('allocation')"><i class="ti ti-transfer"></i>Asset Allocation</button>
+    <button class="sb-item" id="si-audit-log" onclick="showPage('audit-log')"><i class="ti ti-clipboard-list"></i>Audit Log</button>
+    <div class="sb-sec">Tools</div>
+    <button class="sb-item" id="si-import" onclick="showPage('import')"><i class="ti ti-file-upload"></i>Bulk Import</button>
+    <button class="sb-item" id="si-reports" onclick="showPage('reports')"><i class="ti ti-chart-bar"></i>Reports</button>
+  </nav>
+  <div class="sb-footer">
+    <button class="sb-back" onclick="window.location.href='index.html'"><i class="ti ti-arrow-left"></i>Back to ServiceDesk</button>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Dashboard</div>
+    <div class="topbar-right">
+      <button class="btn btn-sm" onclick="showPage('import')"><i class="ti ti-upload"></i>Import</button>
+      <button class="btn btn-sm btn-green" onclick="exportExcel()"><i class="ti ti-file-spreadsheet"></i>Excel</button>
+      <button class="btn btn-sm btn-green" onclick="exportPDF()"><i class="ti ti-file-type-pdf"></i>PDF</button>
+      <button class="btn btn-primary" onclick="openNewAsset()"><i class="ti ti-plus"></i>New Asset</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div id="page-dashboard" class="page">
+      <div class="ph"><div class="ph-left"><h2>Asset Dashboard</h2><p>Real-time overview of your IT assets</p></div></div>
+      <div class="stats-grid" id="dash-stats"></div>
+      <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px;">
+        <div style="background:var(--s0);border:1px solid var(--b1);border-radius:var(--rl);padding:16px;box-shadow:var(--sh);">
+          <div style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;display:flex;align-items:center;gap:6px;"><i class="ti ti-chart-bar" style="color:var(--primary)"></i>Assets by Category</div>
+          <div id="cat-chart"></div>
+        </div>
+        <div style="background:var(--s0);border:1px solid var(--b1);border-radius:var(--rl);padding:16px;box-shadow:var(--sh);">
+          <div style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;display:flex;align-items:center;gap:6px;"><i class="ti ti-alert-circle" style="color:var(--amber)"></i>Warranty Expiring Soon</div>
+          <div id="warranty-list"></div>
+        </div>
+      </div>
+      <div style="background:var(--s0);border:1px solid var(--b1);border-radius:var(--rl);padding:16px;box-shadow:var(--sh);">
+        <div style="font-size:11px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;display:flex;align-items:center;gap:6px;"><i class="ti ti-clock" style="color:var(--red)"></i>Assets Due for Audit</div>
+        <div id="audit-due-list"></div>
+      </div>
+    </div>
+
+    <!-- ═══ ASSET INVENTORY ═══ -->
+    <div id="page-inventory" class="page" style="display:none;">
+      <div class="ph">
+        <div class="ph-left"><h2>Asset Inventory</h2><p id="inv-count-label">Loading...</p></div>
+        <div class="ph-right">
+          <button class="btn btn-sm" onclick="showPage('import')"><i class="ti ti-upload"></i>Import</button>
+          <button class="btn btn-sm btn-green" onclick="exportExcel('inventory')"><i class="ti ti-file-spreadsheet"></i>Excel</button>
+          <button class="btn btn-sm btn-green" onclick="exportPDF('inventory')"><i class="ti ti-file-type-pdf"></i>PDF</button>
+          <button class="btn btn-primary" onclick="openNewAsset()"><i class="ti ti-plus"></i>Add Asset</button>
+        </div>
+      </div>
+      <!-- Filter bar -->
+      <div class="toolbar">
+        <div class="search-box"><i class="ti ti-search"></i><input type="text" id="inv-search" placeholder="Search ID, Tag, Serial, Model, Employee..." oninput="applyFilters()"></div>
+        <div class="filter-row">
+          <select class="filter-sel" id="f-category" onchange="applyFilters()"><option value="">All Categories</option></select>
+          <select class="filter-sel" id="f-status" onchange="applyFilters()">
+            <option value="">All Status</option>
+            <option>Available</option><option>Allocated</option><option>Under Maintenance</option><option>Retired</option><option>Stolen/Lost</option><option>Disposed</option>
+          </select>
+          <select class="filter-sel" id="f-location" onchange="applyFilters()"><option value="">All Locations</option></select>
+          <select class="filter-sel" id="f-dept" onchange="applyFilters()"><option value="">All Departments</option></select>
+          <select class="filter-sel" id="f-warranty" onchange="applyFilters()">
+            <option value="">Warranty: All</option>
+            <option value="expiring">Expiring (90 days)</option>
+            <option value="expired">Expired</option>
+            <option value="valid">Valid</option>
+          </select>
+        </div>
+        <div class="tb-sep"></div>
+        <button class="btn btn-sm btn-amber" onclick="clearFilters()"><i class="ti ti-x"></i>Clear</button>
+        <button class="btn btn-sm" onclick="toggleCols()"><i class="ti ti-columns"></i>Columns</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table id="inv-table">
+            <thead id="inv-thead"><tr>
+              <th><input type="checkbox" id="chk-all" onchange="toggleSelectAll(this)"></th>
+              <th onclick="sortTable('assetId')">Asset ID <span class="sort-ic ti ti-arrows-sort"></span></th>
+              <th onclick="sortTable('company')">Company <span class="sort-ic ti ti-arrows-sort"></span></th>
+              <th onclick="sortTable('assetTag')">Asset Tag <span class="sort-ic ti ti-arrows-sort"></span></th>
+              <th onclick="sortTable('model')">Model <span class="sort-ic ti ti-arrows-sort"></span></th>
+              <th onclick="sortTable('category')">Category <span class="sort-ic ti ti-arrows-sort"></span></th>
+              <th onclick="sortTable('manufacturer')">Manufacturer <span class="sort-ic ti ti-arrows-sort"></span></th>
+              <th onclick="sortTable('serial')">Serial No. <span class="sort-ic ti ti-arrows-sort"></span></th>
+              <th onclick="sortTable('status')">Status <span class="sort-ic ti ti-arrows-sort"></span></th>
+              <th onclick="sortTable('assignedTo')">Assigned To <span class="sort-ic ti ti-arrows-sort"></span></th>
+              <th onclick="sortTable('location')">Location <span class="sort-ic ti ti-arrows-sort"></span></th>
+              <th onclick="sortTable('warrantyExpiry')">Warranty Exp. <span class="sort-ic ti ti-arrows-sort"></span></th>
+              <th onclick="sortTable('value')">Value (₹) <span class="sort-ic ti ti-arrows-sort"></span></th>
+              <th>Actions</th>
+            </tr></thead>
+            <tbody id="inv-tbody"></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="inv-pagination"></div>
+      </div>
+      <!-- Bulk action bar -->
+      <div id="bulk-bar" style="display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 20px;border-radius:50px;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(11,45,94,.4);z-index:100;">
+        <span id="bulk-count" style="font-size:13px;font-weight:600;"></span>
+        <button class="btn btn-sm btn-green" onclick="bulkAllocate()"><i class="ti ti-transfer"></i>Allocate</button>
+        <button class="btn btn-sm btn-amber" onclick="bulkExport()"><i class="ti ti-download"></i>Export</button>
+        <button class="btn btn-sm btn-red" onclick="clearSelection()"><i class="ti ti-x"></i>Clear</button>
+      </div>
+    </div>
+
+    <!-- ═══ ASSET ALLOCATION ═══ -->
+    <div id="page-allocation" class="page" style="display:none;">
+      <div class="ph">
+        <div class="ph-left"><h2>Asset Allocation</h2><p>Manage asset assignments to employees</p></div>
+        <div class="ph-right">
+          <button class="btn btn-sm btn-green" onclick="exportExcel('allocation')"><i class="ti ti-file-spreadsheet"></i>Excel</button>
+          <button class="btn btn-sm btn-green" onclick="exportPDF('allocation')"><i class="ti ti-file-type-pdf"></i>PDF</button>
+          <button class="btn btn-primary" onclick="openAllocModal(null)"><i class="ti ti-transfer"></i>New Allocation</button>
+        </div>
+      </div>
+      <!-- Stats -->
+      <div class="stats-grid" id="alloc-stats" style="grid-template-columns:repeat(4,1fr);"></div>
+      <!-- Tabs -->
+      <div style="display:flex;gap:0;border-bottom:1px solid var(--b1);margin-bottom:16px;">
+        <button class="form-tab active" id="at-active" onclick="switchAllocTab('active')">Active Allocations</button>
+        <button class="form-tab" id="at-history" onclick="switchAllocTab('history')">Allocation History</button>
+        <button class="form-tab" id="at-available" onclick="switchAllocTab('available')">Available Assets</button>
+      </div>
+      <div id="alloc-active-pane">
+        <div class="toolbar">
+          <div class="search-box"><i class="ti ti-search"></i><input type="text" id="alloc-search" placeholder="Search by Asset ID, Employee, Dept..." oninput="renderAllocActive()"></div>
+          <select class="filter-sel" id="af-dept" onchange="renderAllocActive()"><option value="">All Departments</option></select>
+          <select class="filter-sel" id="af-cat" onchange="renderAllocActive()"><option value="">All Categories</option></select>
+        </div>
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table>
+              <thead><tr>
+                <th>Asset ID</th><th>Asset Tag</th><th>Category</th><th>Model</th><th>Serial</th>
+                <th>Assigned To</th><th>Emp No.</th><th>Dept.</th><th>Manager</th><th>Location</th>
+                <th>Alloc. Date</th><th>Return Date</th><th>Alloc. By</th><th>Status</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="alloc-active-body"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="alloc-pagination"></div>
+        </div>
+      </div>
+      <div id="alloc-history-pane" style="display:none;">
+        <div class="table-wrap">
+          <div class="table-scroll">
+            <table>
+              <thead><tr>
+                <th>#</th><th>Asset ID</th><th>Asset Tag</th><th>Model</th><th>Assigned To</th>
+                <th>Emp No.</th><th>Dept.</th><th>Alloc. Date</th><th>Dealloc. Date</th>
+                <th>Alloc. By</th><th>Action</th><th>Remarks</th>
+              </tr></thead>
+              <tbody id="alloc-hist-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div id="alloc-available-pane" style="display:none;">
+        <div id="avail-cards"></div>
+      </div>
+    </div>
+
+    <!-- ═══ AUDIT LOG ═══ -->
+    <div id="page-audit-log" class="page" style="display:none;">
+      <div class="ph"><div class="ph-left"><h2>Audit Log</h2><p>Complete history of all asset modifications</p></div>
+        <div class="ph-right"><button class="btn btn-sm btn-green" onclick="exportExcel('audit')"><i class="ti ti-download"></i>Export</button></div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>#</th><th>Date & Time</th><th>Asset ID</th><th>Action</th><th>Field Changed</th><th>Old Value</th><th>New Value</th><th>Changed By</th><th>Notes</th></tr></thead>
+            <tbody id="audit-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ BULK IMPORT ═══ -->
+    <div id="page-import" class="page" style="display:none;">
+      <div class="ph"><div class="ph-left"><h2>Bulk Import</h2><p>Import assets from Excel or CSV</p></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div style="background:var(--s0);border:1px solid var(--b1);border-radius:var(--rl);padding:20px;box-shadow:var(--sh);">
+          <div class="section-label"><i class="ti ti-file-download"></i>Step 1 — Download Template</div>
+          <p style="font-size:12px;color:var(--tx2);margin-bottom:14px;">Download the Excel/CSV template and fill in your asset data.</p>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-green" onclick="downloadTemplate('xlsx')"><i class="ti ti-file-spreadsheet"></i>Excel Template</button>
+            <button class="btn btn-green" onclick="downloadTemplate('csv')"><i class="ti ti-file-type-csv"></i>CSV Template</button>
+          </div>
+          <div style="margin-top:16px;background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:12px;">
+            <div style="font-size:11px;font-weight:700;color:var(--tx3);margin-bottom:8px;">REQUIRED COLUMNS</div>
+            <div style="font-size:11px;color:var(--tx2);line-height:1.9;">Category · Asset Tag · Model · Manufacturer · Serial Number · Status · Location · City · Country · Assigned To · Employee Number · Department</div>
+          </div>
+        </div>
+        <div style="background:var(--s0);border:1px solid var(--b1);border-radius:var(--rl);padding:20px;box-shadow:var(--sh);">
+          <div class="section-label"><i class="ti ti-file-upload"></i>Step 2 — Upload File</div>
+          <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="e=>{e.preventDefault();this.classList.add('drag')}" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
+            <i class="ti ti-cloud-upload"></i>
+            <div style="font-size:14px;font-weight:600;color:var(--tx2);margin-bottom:6px;">Drop your file here</div>
+            <div style="font-size:12px;color:var(--tx3);">Supports .xlsx, .xls, .csv — Max 5MB</div>
+          </div>
+          <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileImport(this)">
+          <div id="import-preview" style="margin-top:14px;display:none;">
+            <div class="section-label"><i class="ti ti-eye"></i>Preview</div>
+            <div id="import-preview-table" style="overflow-x:auto;max-height:200px;overflow-y:auto;font-size:11px;"></div>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+              <button class="btn btn-primary" onclick="confirmImport()"><i class="ti ti-check"></i>Confirm Import</button>
+              <button class="btn btn-ghost" onclick="cancelImport()"><i class="ti ti-x"></i>Cancel</button>
+            </div>
+            <div id="import-status" style="margin-top:8px;font-size:12px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ REPORTS ═══ -->
+    <div id="page-reports" class="page" style="display:none;">
+      <div class="ph"><div class="ph-left"><h2>Reports</h2><p>Generate and export asset reports</p></div></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;" id="report-cards"></div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ═══ MODAL: Add / Edit Asset ═══ -->
+<div class="overlay" id="modal-asset">
+  <div class="modal modal-lg">
+    <div class="modal-head">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--teal),var(--primary));display:flex;align-items:center;justify-content:center;"><i class="ti ti-device-laptop" style="color:#fff;font-size:18px;"></i></div>
+        <div><div style="font-size:11px;color:var(--tx3);margin-bottom:1px;" id="modal-asset-mode">NEW ASSET</div><h3 id="modal-asset-title">Add Asset</h3></div>
+      </div>
+      <button class="btn btn-sm btn-ghost" onclick="cm('modal-asset')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-tabs">
+        <button class="form-tab active" onclick="switchFormTab(this,'ft-basic')">Basic Info</button>
+        <button class="form-tab" onclick="switchFormTab(this,'ft-specs')">Technical Specs</button>
+        <button class="form-tab" onclick="switchFormTab(this,'ft-location')">Location</button>
+        <button class="form-tab" onclick="switchFormTab(this,'ft-assign')">Assignment</button>
+        <button class="form-tab" onclick="switchFormTab(this,'ft-finance')">Finance & Warranty</button>
+        <button class="form-tab" onclick="switchFormTab(this,'ft-audit')">Audit</button>
+      </div>
+
+      <!-- BASIC INFO -->
+      <div class="form-section active" id="ft-basic">
+        <div class="section-label"><i class="ti ti-tag"></i>Asset Identification</div>
+        <div class="form-grid">
+          <div class="fg"><label>Asset ID (Auto-generated)</label><div class="asset-id-display" id="am-assetid-display">—</div><input type="hidden" id="am-assetid"></div>
+          <div class="fg"><label>Company</label><input type="text" id="am-company" placeholder="e.g. TechCorp India Pvt Ltd"></div>
+          <div class="fg"><label>Asset Tag *</label><input type="text" id="am-tag" placeholder="e.g. CHN-L-0042"></div>
+          <div class="fg"><label>Category *</label>
+            <select id="am-category" onchange="onCategoryChange()">
+              <option value="">— Select —</option>
+              <option>Laptop</option><option>Desktop</option><option>Monitor</option><option>Printer</option>
+              <option>Server</option><option>Network Device</option><option>Mobile</option><option>Tablet</option>
+              <option>Mouse</option><option>Keyboard</option><option>Headphone</option><option>USB Headphone</option>
+              <option>Wifi Device</option><option>Television Set</option><option>Other</option>
+            </select>
+          </div>
+          <div class="fg"><label>Model *</label><select id="am-model"><option value="">— Select model —</option></select></div>
+          <div class="fg"><label>Model No.</label><input type="text" id="am-modelno" placeholder="e.g. 20DS0012IG"></div>
+          <div class="fg"><label>Manufacturer</label><input type="text" id="am-manufacturer" placeholder="e.g. Dell, HP, Lenovo"></div>
+          <div class="fg"><label>Serial Number</label><input type="text" id="am-serial" placeholder="e.g. SN123456ABC"></div>
+          <div class="fg"><label>Order Number</label><input type="text" id="am-orderno" placeholder="e.g. PO-2024-0118"></div>
+          <div class="fg"><label>Supplier</label><input type="text" id="am-supplier" placeholder="e.g. Rashi Peripherals"></div>
+          <div class="fg"><label>Status *</label>
+            <select id="am-status">
+              <option value="Available">Available</option>
+              <option value="Allocated">Allocated</option>
+              <option value="Under Maintenance">Under Maintenance</option>
+              <option value="Retired">Retired</option>
+              <option value="Stolen/Lost">Stolen/Lost</option>
+              <option value="Disposed">Disposed</option>
+            </select>
+          </div>
+          <div class="fg"><label>Type</label><input type="text" id="am-type" placeholder="e.g. Physical, Virtual"></div>
+        </div>
+      </div>
+
+      <!-- TECHNICAL SPECS -->
+      <div class="form-section" id="ft-specs">
+        <div class="section-label"><i class="ti ti-cpu"></i>Technical Specifications</div>
+        <div class="form-grid">
+          <div class="fg"><label>Processor</label><input type="text" id="am-proc" placeholder="e.g. Intel Core i5-1135G7"></div>
+          <div class="fg"><label>Processor Speed</label><input type="text" id="am-procspeed" placeholder="e.g. 2.4GHz base / 4.2GHz boost"></div>
+          <div class="fg"><label>RAM</label><input type="text" id="am-ram" placeholder="e.g. 16 GB"></div>
+          <div class="fg"><label>RAM Type</label><input type="text" id="am-ramtype" placeholder="e.g. DDR4, LPDDR5"></div>
+          <div class="fg"><label>HDD / SSD</label><input type="text" id="am-hdd" placeholder="e.g. 512 GB SSD NVMe"></div>
+          <div class="fg"><label>MAC Address</label><input type="text" id="am-mac" placeholder="e.g. AA:BB:CC:DD:EE:FF"></div>
+          <div class="fg"><label>Charger Number</label><input type="text" id="am-charger" placeholder="e.g. CHG-0042"></div>
+        </div>
+      </div>
+
+      <!-- LOCATION -->
+      <div class="form-section" id="ft-location">
+        <div class="section-label"><i class="ti ti-map-pin"></i>Asset Location</div>
+        <div class="form-grid">
+          <div class="fg"><label>Default Location</label><select id="am-location"><option value="">— Select —</option></select></div>
+          <div class="fg"><label>City</label><input type="text" id="am-city" placeholder="e.g. Chennai"></div>
+          <div class="fg"><label>State</label><input type="text" id="am-state" placeholder="e.g. Tamil Nadu"></div>
+          <div class="fg"><label>Country</label><input type="text" id="am-country" placeholder="e.g. India"></div>
+        </div>
+      </div>
+
+      <!-- ASSIGNMENT -->
+      <div class="form-section" id="ft-assign">
+        <div class="section-label"><i class="ti ti-user-check"></i>Employee Assignment</div>
+        <div class="form-grid">
+          <div class="fg"><label>Username / Employee Name</label><select id="am-username"><option value="">— Select employee —</option></select></div>
+          <div class="fg"><label>Employee Number</label><input type="text" id="am-empno" class="ro" readonly placeholder="Auto-filled"></div>
+          <div class="fg"><label>Department</label><input type="text" id="am-dept" placeholder="e.g. Finance"></div>
+          <div class="fg"><label>Manager</label><input type="text" id="am-manager" placeholder="e.g. Ravi Kumar"></div>
+          <div class="fg"><label>Allocated Date</label><input type="date" id="am-allocdate"></div>
+          <div class="fg"><label>Deallocated Date</label><input type="date" id="am-deallocdate"></div>
+        </div>
+      </div>
+
+      <!-- FINANCE & WARRANTY -->
+      <div class="form-section" id="ft-finance">
+        <div class="section-label"><i class="ti ti-cash"></i>Finance & Warranty</div>
+        <div class="form-grid">
+          <div class="fg"><label>Asset Value (₹)</label><input type="number" id="am-value" placeholder="e.g. 65000"></div>
+          <div class="fg"><label>Warranty (months)</label><input type="number" id="am-warranty" placeholder="e.g. 36"></div>
+          <div class="fg"><label>Warranty Expiry Date</label><input type="date" id="am-warrantyexp"></div>
+        </div>
+      </div>
+
+      <!-- AUDIT -->
+      <div class="form-section" id="ft-audit">
+        <div class="section-label"><i class="ti ti-clipboard-check"></i>Audit Information</div>
+        <div class="form-grid">
+          <div class="fg"><label>Asset Created At</label><input type="text" id="am-createdat" class="ro" readonly></div>
+          <div class="fg"><label>Last Updated</label><input type="text" id="am-updatedat" class="ro" readonly></div>
+          <div class="fg"><label>Last Audit Date</label><input type="date" id="am-lastaudit"></div>
+          <div class="fg"><label>Next Audit Date</label><input type="date" id="am-nextaudit"></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="cm('modal-asset')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAsset()"><i class="ti ti-check"></i>Save Asset</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Asset Detail ═══ -->
+<div class="overlay" id="modal-detail">
+  <div class="modal modal-lg">
+    <div class="modal-head"><h3 id="detail-title">Asset Detail</h3><button class="btn btn-sm btn-ghost" onclick="cm('modal-detail')"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body" id="detail-body"></div>
+    <div class="modal-foot" id="detail-foot"></div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Allocate Asset ═══ -->
+<div class="overlay" id="modal-alloc">
+  <div class="modal modal-md">
+    <div class="modal-head"><h3 id="alloc-modal-title">Allocate Asset</h3><button class="btn btn-sm btn-ghost" onclick="cm('modal-alloc')"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fg"><label>Asset ID / Tag *</label>
+          <select id="al-asset" onchange="onAllocAssetSelect(this.value)">
+            <option value="">— Select available asset —</option>
+          </select>
+        </div>
+        <div class="fg"><label>Category</label><input type="text" id="al-cat" class="ro" readonly></div>
+        <div class="fg"><label>Model</label><input type="text" id="al-model" class="ro" readonly></div>
+        <div class="fg"><label>Serial No.</label><input type="text" id="al-serial" class="ro" readonly></div>
+        <div class="fg"><label>Employee *</label>
+          <select id="al-emp" onchange="onAllocEmpSelect(this.value)">
+            <option value="">— Select employee —</option>
+          </select>
+        </div>
+        <div class="fg"><label>Employee Number</label><input type="text" id="al-empno" class="ro" readonly></div>
+        <div class="fg"><label>Department</label><input type="text" id="al-dept" readonly id="al-dept"></div>
+        <div class="fg"><label>Manager</label><input type="text" id="al-manager" placeholder="Manager name"></div>
+        <div class="fg"><label>Location</label><select id="al-location"><option value="">— Select —</option></select></div>
+        <div class="fg"><label>Allocation Date *</label><input type="date" id="al-date"></div>
+        <div class="fg"><label>Expected Return Date</label><input type="date" id="al-return"></div>
+        <div class="fg"><label>Allocation Status</label>
+          <select id="al-status">
+            <option value="Active">Active</option>
+            <option value="Temporary">Temporary</option>
+            <option value="Permanent">Permanent</option>
+          </select>
+        </div>
+        <div class="fg full"><label>Remarks</label><textarea id="al-remarks" placeholder="Any notes about this allocation..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="cm('modal-alloc')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAllocation()"><i class="ti ti-transfer"></i>Confirm Allocation</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: Deallocate ═══ -->
+<div class="overlay" id="modal-dealloc">
+  <div class="modal modal-sm">
+    <div class="modal-head"><h3>Return / Deallocate Asset</h3><button class="btn btn-sm btn-ghost" onclick="cm('modal-dealloc')"><i class="ti ti-x"></i></button></div>
+    <div class="modal-body">
+      <div id="dealloc-info" style="background:var(--s1);border:1px solid var(--b1);border-radius:var(--r);padding:12px;margin-bottom:14px;font-size:12px;color:var(--tx2);"></div>
+      <div class="form-grid">
+        <div class="fg"><label>Deallocation Date *</label><input type="date" id="dl-date"></div>
+        <div class="fg"><label>New Status</label>
+          <select id="dl-status">
+            <option value="Available">Available</option>
+            <option value="Under Maintenance">Under Maintenance</option>
+            <option value="Retired">Retired</option>
+          </select>
+        </div>
+        <div class="fg full"><label>Remarks</label><textarea id="dl-remarks" placeholder="Reason for return / condition of asset..."></textarea></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="cm('modal-dealloc')">Cancel</button>
+      <button class="btn btn-primary btn-red" onclick="confirmDealloc()"><i class="ti ti-check"></i>Confirm Return</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════════════════════════════
+const CAT_PREFIX = {
+  'Laptop':'L','Desktop':'D','Monitor':'MO','Printer':'P','Server':'S',
+  'Network Device':'N','Mobile':'MB','Tablet':'T','Mouse':'MS',
+  'Keyboard':'KB','Headphone':'HP','USB Headphone':'UH',
+  'Wifi Device':'W','Television Set':'TV','Other':'O'
+};
+
+const MODEL_MAP = {
+  'Laptop':['Dell Latitude 3400','Dell Latitude 3410 BTX','Dell Latitude 3330','Dell Latitude 5580','Dell Latitude E5440','Dell Latitude E7280','Dell Latitude E7480','Dell Vostro 3401','Dell Inspiron 5370','HP EliteBook 840 G1','HP EliteBook 840 G3','HP EliteBook Folio 9480m','HP EliteBook 645 G9','HP ProBook 640 G1','HP ProBook 430 G3','HP X360 1030 G2','HP Spectre Pro X360 G1','HP Pavilion x360 14-dh1179tu','HP ENVY x360 13-ay0045au','HP Laptop 14s-dq2535TU','HP 240 G3','HP 240 G5','HP 240 G6','HP 240 G7','HP 240 G8','HP 245 G6','HP 250 G8','HP Notebook 14-ck2018tu','HP Victus 15-fb3185ax','Lenovo V14-IKB','Lenovo V14 G2 ITL','Lenovo V14 G3 IAP','Lenovo V15 G2-ITL','Lenovo V15 IIL','Lenovo V130-15IKB','Lenovo V130-14IKB','Lenovo ThinkPad L450','Lenovo ThinkPad E14','Lenovo ThinkBook 15 G5 ABP','Lenovo ThinkBook 16 G6 ABP','Lenovo Yoga Slim 7-14IIL05','Lenovo Yoga 6 Slim','Lenovo IdeaPad 3-15IML05','Lenovo IdeaPad S340-14IIL','Lenovo 1115G4','Lenovo 1135G7','Asus P1440FA-5810','Asus P1440FA-FQ1707','Asus B1402CBA','Asus B1502CVA-N3021','Acer TMP214-52-58QS','Acer TravelMate P414RN-53','Acer Aspire Lite','Acer Swift 5 SF514-55TA-53WZ','Apple MacBook Air','Apple MacBook Pro','HP ZBOOK Firefly 14 G11'],
+  'Desktop':['HP ProDesk 600 G2','HP 600 G3 SFFF','HP Pro G2 MT','HP 280 G2 MT','HP 280 G3 Microtower','HP 280 Pro G1 Microtower','HP EliteDesk 800 G2','Dell Optiplex 3070','Dell Optiplex 9020','Dell Optiplex 7020','Dell Precision 5820 Tower','Dell Vostro 3800','Dell 3020','Dell Inspiron 620s','Dell Vostro 230','Dell Vostro 220s','Dell 3579 G3 Gaming','Lenovo V530-15ICB','Lenovo V520-15IKL','Lenovo V530s-07ICB','Lenovo ThinkCentre M93p','Lenovo M83 ThinkCentre','Lenovo E73 ThinkCentre','Acer Veriton','Acer Veriton-IC6879','Assemble / Customized'],
+  'Monitor':['Dell E1916HE','Dell E1916HVF','Dell E1913C','Dell E1709WC','Dell 2418HV','Dell 2421HN','Dell P2717H','HP V193','HP V194','HP V192','HP LV1911','HP Z23i','Lenovo E2054A','Lenovo E1922 swD','Lenovo E1922S','Lenovo L197wA','Lenovo C19-10','Acer EV196HQL','LG 32MN58HM','LG 24 IPS QHD-24U631A','AOC E970S','ViewSonic VS1285','Samsung Monitor','Philips 223V5'],
+  'Printer':['HP LaserJet Pro MFP M126nw','HP LaserJet Pro MFP M429FDW','HP Color LaserJet Pro MFP M183FW','HP Color LaserJet Pro MFP 4303fdw','HP LaserJet Pro MFP M227 SDN','HP LaserJet M1136 MFP','Konica Minolta Bizhub C226'],
+  'Server':['Dell PowerEdge R740','Dell PowerEdge R630','HP ProLiant DL380 Gen10','HP ProLiant DL360 Gen9'],
+  'Network Device':['Cisco AP-305','Cisco AP-315','Netgear 24-Port GE Switch','DGS-1005A 5 Port','DGS-1008A 8 Port','DGS-1016 16 Port','DellSwitch N1124T-ON'],
+  'Mobile':['iPhone 15 Pro','iPhone 14','Samsung Galaxy S23','OnePlus 11'],
+  'Tablet':['iPad Pro 12.9','iPad Air M1','Samsung Galaxy Tab S8'],
+  'Mouse':['HP Wired Mouse','Dell Wired Mouse','Logitech M100','Logitech MX Master'],
+  'Keyboard':['HP Keyboard','Dell Keyboard','Logitech K120','Logitech MK270'],
+  'Headphone':['Jabra Evolve2 40','Sony WH-1000XM5','Plantronics Voyager'],
+  'USB Headphone':['Logitech H540','Jabra Evolve 40 USB','Poly Voyager Focus 2'],
+  'Wifi Device':['Cisco AP-305','Cisco AP-315','Netgear WAC120'],
+  'Television Set':['TCL 55P6K','TCL 43S5k','Samsung 55" LED','LG 49" UHD'],
+  'Other':['Other'],
+};
+
+let ASSETS = [];
+let ALLOCATIONS = [];
+let AUDIT_LOG = [];
+let editAssetId = null;
+let deallocAssetId = null;
+let importData = [];
+let currentPage = 1;
+let pageSize = 20;
+let sortField = 'assetId';
+let sortDir = 1;
+let filteredAssets = [];
+let selectedAssets = new Set();
+let allocTab = 'active';
+
+// Mock locations and users (replace with real data from main portal)
+const LOCATIONS = ['Chennai Head Office','Bangalore Tech Park','Mumbai Data Centre','Delhi NCR Remote Site','Hyderabad Office'];
+const USERS = [
+  {name:'Ravi Kumar',empId:'EMP-0001',dept:'Finance',email:'ravi.kumar@company.com'},
+  {name:'Priya S.',empId:'EMP-0002',dept:'IT Ops',email:'priya.s@company.com'},
+  {name:'Arjun R.',empId:'EMP-0004',dept:'IT Ops',email:'arjun.r@company.com'},
+  {name:'Ananya G.',empId:'EMP-0005',dept:'HR',email:'ananya.g@company.com'},
+  {name:'Meera M.',empId:'EMP-0006',dept:'IT Ops',email:'meera.m@company.com'},
+];
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function $(id){return document.getElementById(id);}
+function nows(){return new Date().toISOString().replace('T',' ').substring(0,19);}
+function today(){return new Date().toISOString().split('T')[0];}
+function toast(m,type=''){
+  const t=$('toast');t.textContent=m;t.style.background=type==='err'?'#DC2626':type==='warn'?'#D97706':'#0B2D5E';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);
+}
+function cm(id){$(id).classList.remove('open');}
+function statusBadge(s){
+  const m={'Available':'bd-avail','Allocated':'bd-alloc','Under Maintenance':'bd-maint','Retired':'bd-retire','Stolen/Lost':'bd-stolen','Disposed':'bd-dispose','Pending':'bd-pending'};
+  return`<span class="badge ${m[s]||'bd-pending'}">${s||'—'}</span>`;
+}
+function catPrefix(cat){return CAT_PREFIX[cat]||cat.charAt(0).toUpperCase();}
+function nextId(cat){
+  const px=catPrefix(cat);
+  const nums=ASSETS.filter(a=>a.category===cat).map(a=>{const m=(a.assetId||'').match(/(\d+)$/);return m?parseInt(m[1]):0;}).filter(n=>!isNaN(n));
+  const next=nums.length?Math.max(...nums)+1:1;
+  return`${px}-${String(next).padStart(4,'0')}`;
+}
+function addAudit(assetId,action,field,oldVal,newVal,by,notes=''){
+  AUDIT_LOG.unshift({id:AUDIT_LOG.length+1,ts:nows(),assetId,action,field,oldVal,newVal,by,notes});
+  renderAuditLog();
+}
+
+// ── PAGE NAVIGATION ───────────────────────────────────────────────────────────
+const PAGE_TITLES={'dashboard':'Dashboard','inventory':'Asset Inventory','allocation':'Asset Allocation','audit-log':'Audit Log','import':'Bulk Import','reports':'Reports'};
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  document.querySelectorAll('.sb-item').forEach(s=>s.classList.remove('active'));
+  $(('page-'+id)).style.display='block';
+  const si=$('si-'+id);if(si)si.classList.add('active');
+  $('page-title').textContent=PAGE_TITLES[id]||id;
+  if(id==='dashboard')renderDashboard();
+  if(id==='inventory'){applyFilters();populateFilterDropdowns();}
+  if(id==='allocation')renderAllocation();
+  if(id==='audit-log')renderAuditLog();
+  if(id==='reports')renderReports();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function renderDashboard(){
+  const total=ASSETS.length;
+  const avail=ASSETS.filter(a=>a.status==='Available').length;
+  const alloc=ASSETS.filter(a=>a.status==='Allocated').length;
+  const maint=ASSETS.filter(a=>a.status==='Under Maintenance').length;
+  const today30=new Date();today30.setDate(today30.getDate()+90);
+  const warnExp=ASSETS.filter(a=>{if(!a.warrantyExpiry)return false;return new Date(a.warrantyExpiry)<=today30&&new Date(a.warrantyExpiry)>=new Date();}).length;
+  const auditDue=ASSETS.filter(a=>a.nextAudit&&new Date(a.nextAudit)<=new Date()).length;
+
+  $('dash-stats').innerHTML=`
+    <div class="stat-card" style="--ac:#0B63CE"><div class="stat-ic" style="background:#DBEAFE"><i class="ti ti-device-laptop" style="color:#0B63CE"></i></div><div class="stat-n">${total}</div><div class="stat-l">Total Assets</div></div>
+    <div class="stat-card" style="--ac:#059669"><div class="stat-ic" style="background:#D1FAE5"><i class="ti ti-circle-check" style="color:#059669"></i></div><div class="stat-n">${avail}</div><div class="stat-l">Available</div></div>
+    <div class="stat-card" style="--ac:#1A8FE3"><div class="stat-ic" style="background:#E0F2FE"><i class="ti ti-user-check" style="color:#1A8FE3"></i></div><div class="stat-n">${alloc}</div><div class="stat-l">Allocated</div></div>
+    <div class="stat-card" style="--ac:#D97706"><div class="stat-ic" style="background:#FEF3C7"><i class="ti ti-tool" style="color:#D97706"></i></div><div class="stat-n">${maint}</div><div class="stat-l">Under Maintenance</div></div>
+    <div class="stat-card" style="--ac:#DC2626"><div class="stat-ic" style="background:#FEE2E2"><i class="ti ti-alert-triangle" style="color:#DC2626"></i></div><div class="stat-n">${warnExp}</div><div class="stat-l">Warranty Expiring</div></div>
+    <div class="stat-card" style="--ac:#7C3AED"><div class="stat-ic" style="background:#EDE9FE"><i class="ti ti-clipboard-list" style="color:#7C3AED"></i></div><div class="stat-n">${auditDue}</div><div class="stat-l">Audit Due</div></div>`;
+
+  // Category chart
+  const cats={};ASSETS.forEach(a=>{cats[a.category]=(cats[a.category]||0)+1;});
+  const max=Math.max(...Object.values(cats),1);
+  const colors=['#0B63CE','#0BA5A4','#059669','#D97706','#DC2626','#7C3AED','#F59E0B','#06B6D4'];
+  $('cat-chart').innerHTML=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,n],i)=>`
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <span style="min-width:130px;font-size:11px;color:var(--tx2);font-weight:500;">${c}</span>
+      <div style="flex:1;height:10px;background:var(--s2);border-radius:5px;overflow:hidden;">
+        <div style="height:100%;width:${Math.round(n/max*100)}%;background:${colors[i%colors.length]};border-radius:5px;transition:width .4s;"></div>
+      </div>
+      <span style="min-width:28px;text-align:right;font-family:var(--mono);font-size:11px;color:var(--tx2);">${n}</span>
+    </div>`).join('')||'<div style="color:var(--tx3);font-size:12px;">No assets yet.</div>';
+
+  // Warranty expiring
+  const soon30=new Date();soon30.setDate(soon30.getDate()+90);
+  const wList=ASSETS.filter(a=>a.warrantyExpiry&&new Date(a.warrantyExpiry)<=soon30&&new Date(a.warrantyExpiry)>=new Date()).slice(0,6);
+  $('warranty-list').innerHTML=wList.length?wList.map(a=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--b1);">
+      <span style="font-family:var(--mono);font-size:11px;color:var(--teal);min-width:80px;">${a.assetId}</span>
+      <span style="flex:1;font-size:12px;font-weight:500;">${a.model||a.assetTag}</span>
+      <span style="font-size:11px;color:var(--amber);font-weight:600;">${a.warrantyExpiry}</span>
+    </div>`).join(''):`<div style="color:var(--tx3);font-size:12px;">No warranties expiring within 90 days.</div>`;
+
+  // Audit due
+  const aDue=ASSETS.filter(a=>a.nextAudit&&new Date(a.nextAudit)<=new Date()).slice(0,6);
+  $('audit-due-list').innerHTML=aDue.length?aDue.map(a=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--b1);">
+      <span style="font-family:var(--mono);font-size:11px;color:var(--teal);min-width:80px;">${a.assetId}</span>
+      <span style="flex:1;font-size:12px;font-weight:500;">${a.model||a.assetTag}</span>
+      <span style="font-size:11px;color:var(--red);font-weight:600;">${a.nextAudit}</span>
+      <button class="btn btn-sm btn-amber" onclick="markAudited('${a.assetId}')">Mark Audited</button>
+    </div>`).join(''):`<div style="color:var(--tx3);font-size:12px;">No assets due for audit.</div>`;
+}
+
+function markAudited(id){
+  const a=ASSETS.find(x=>x.assetId===id);if(!a)return;
+  const prev=a.lastAudit;a.lastAudit=today();a.nextAudit='';
+  addAudit(id,'Audit','lastAudit',prev,today(),'Admin');
+  renderDashboard();toast('Asset marked as audited.');
+}
+
+// ── ASSET INVENTORY ───────────────────────────────────────────────────────────
+function populateFilterDropdowns(){
+  const cats=[...new Set(ASSETS.map(a=>a.category).filter(Boolean))].sort();
+  const locs=[...new Set(ASSETS.map(a=>a.location).filter(Boolean))].sort();
+  const depts=[...new Set(ASSETS.map(a=>a.dept).filter(Boolean))].sort();
+  const fc=$('f-category');const cur=fc.value;fc.innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option ${c===cur?'selected':''}>${c}</option>`).join('');
+  const fl=$('f-location');const cur2=fl.value;fl.innerHTML='<option value="">All Locations</option>'+locs.map(l=>`<option ${l===cur2?'selected':''}>${l}</option>`).join('');
+  const fd=$('f-dept');const cur3=fd.value;fd.innerHTML='<option value="">All Departments</option>'+depts.map(d=>`<option ${d===cur3?'selected':''}>${d}</option>`).join('');
+}
+
+function applyFilters(){
+  const q=($('inv-search').value||'').toLowerCase();
+  const cat=$('f-category').value;
+  const status=$('f-status').value;
+  const loc=$('f-location').value;
+  const dept=$('f-dept').value;
+  const war=$('f-warranty').value;
+  const today90=new Date();today90.setDate(today90.getDate()+90);
+
+  filteredAssets=ASSETS.filter(a=>{
+    if(q&&!['assetId','assetTag','serial','model','assignedTo','empNo','dept','manufacturer','orderNo'].some(k=>(a[k]||'').toLowerCase().includes(q)))return false;
+    if(cat&&a.category!==cat)return false;
+    if(status&&a.status!==status)return false;
+    if(loc&&a.location!==loc)return false;
+    if(dept&&a.dept!==dept)return false;
+    if(war==='expiring'&&!(a.warrantyExpiry&&new Date(a.warrantyExpiry)<=today90&&new Date(a.warrantyExpiry)>=new Date()))return false;
+    if(war==='expired'&&!(a.warrantyExpiry&&new Date(a.warrantyExpiry)<new Date()))return false;
+    if(war==='valid'&&!(a.warrantyExpiry&&new Date(a.warrantyExpiry)>today90))return false;
+    return true;
+  });
+
+  // Sort
+  filteredAssets.sort((a,b)=>{
+    const va=(a[sortField]||'').toString().toLowerCase();
+    const vb=(b[sortField]||'').toString().toLowerCase();
+    return va<vb?-sortDir:va>vb?sortDir:0;
+  });
+
+  currentPage=1;
+  renderInventoryTable();
+  $('inv-count-label').textContent=`${filteredAssets.length} of ${ASSETS.length} assets`;
+  $('inv-badge').textContent=ASSETS.length;
+}
+
+function clearFilters(){
+  $('inv-search').value='';
+  ['f-category','f-status','f-location','f-dept','f-warranty'].forEach(id=>{$(id).value='';});
+  applyFilters();
+}
+
+function sortTable(field){
+  if(sortField===field)sortDir*=-1;else{sortField=field;sortDir=1;}
+  document.querySelectorAll('thead th').forEach(th=>th.classList.remove('sorted'));
+  applyFilters();
+}
+
+function renderInventoryTable(){
+  const start=(currentPage-1)*pageSize;
+  const page=filteredAssets.slice(start,start+pageSize);
+  const today90=new Date();today90.setDate(today90.getDate()+90);
+  $('inv-tbody').innerHTML=page.length?page.map(a=>{
+    const warnColor=a.warrantyExpiry&&new Date(a.warrantyExpiry)<new Date()?'color:#DC2626':a.warrantyExpiry&&new Date(a.warrantyExpiry)<=today90?'color:#D97706':'';
+    return`<tr onclick="openDetail('${a.assetId}')" class="${selectedAssets.has(a.assetId)?'selected':''}">
+      <td onclick="event.stopPropagation()"><input type="checkbox" ${selectedAssets.has(a.assetId)?'checked':''} onchange="toggleSelect('${a.assetId}',this.checked)"></td>
+      <td><span style="font-family:var(--mono);font-size:11px;color:var(--teal);font-weight:600;">${a.assetId}</span></td>
+      <td style="font-size:11px;color:var(--tx2);">${a.company||'—'}</td>
+      <td style="font-weight:500;">${a.assetTag||'—'}</td>
+      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;">${a.model||'—'}</td>
+      <td>${a.category||'—'}</td>
+      <td style="color:var(--tx2);font-size:11px;">${a.manufacturer||'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--tx2);">${a.serial||'—'}</td>
+      <td>${statusBadge(a.status)}</td>
+      <td style="font-size:12px;">${a.assignedTo||'—'}</td>
+      <td style="font-size:11px;color:var(--tx2);">${a.location||'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;${warnColor}">${a.warrantyExpiry||'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;">${a.value?'₹'+Number(a.value).toLocaleString('en-IN'):'—'}</td>
+      <td onclick="event.stopPropagation()" style="white-space:nowrap;">
+        <button class="btn btn-sm btn-amber" title="Edit" onclick="openEditAsset('${a.assetId}')"><i class="ti ti-edit"></i></button>
+        ${a.status==='Available'?`<button class="btn btn-sm btn-primary" title="Allocate" onclick="openAllocModal('${a.assetId}')"><i class="ti ti-transfer"></i></button>`:''}
+        ${a.status==='Allocated'?`<button class="btn btn-sm btn-red" title="Return" onclick="openDealloc('${a.assetId}')"><i class="ti ti-arrow-back"></i></button>`:''}
+      </td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="14"><div class="empty"><i class="ti ti-device-laptop"></i><p>No assets match your filters.</p></div></td></tr>`;
+  renderPagination();
+}
+
+function renderPagination(){
+  const total=Math.ceil(filteredAssets.length/pageSize);
+  const pg=$('inv-pagination');
+  if(total<=1){pg.innerHTML='<span class="pg-info">'+filteredAssets.length+' records</span><select class="pg-size" onchange="pageSize=+this.value;currentPage=1;renderInventoryTable()"><option value="20">20/page</option><option value="50">50/page</option><option value="100">100/page</option></select>';return;}
+  let btns=`<button class="pg-btn" onclick="currentPage=Math.max(1,currentPage-1);renderInventoryTable()" ${currentPage===1?'disabled':''}><i class="ti ti-chevron-left"></i></button>`;
+  for(let i=1;i<=total;i++){
+    if(i===1||i===total||Math.abs(i-currentPage)<=2)btns+=`<button class="pg-btn ${i===currentPage?'active':''}" onclick="currentPage=${i};renderInventoryTable()">${i}</button>`;
+    else if(Math.abs(i-currentPage)===3)btns+=`<span style="padding:0 4px;color:var(--tx3)">...</span>`;
+  }
+  btns+=`<button class="pg-btn" onclick="currentPage=Math.min(${total},currentPage+1);renderInventoryTable()" ${currentPage===total?'disabled':''}><i class="ti ti-chevron-right"></i></button>`;
+  pg.innerHTML=`${btns}<span class="pg-info">Page ${currentPage} of ${total} · ${filteredAssets.length} records</span><select class="pg-size" onchange="pageSize=+this.value;currentPage=1;renderInventoryTable()"><option value="20">20/page</option><option value="50">50/page</option><option value="100">100/page</option></select>`;
+}
+
+// ── SELECT / BULK ─────────────────────────────────────────────────────────────
+function toggleSelect(id,checked){
+  if(checked)selectedAssets.add(id);else selectedAssets.delete(id);
+  updateBulkBar();renderInventoryTable();
+}
+function toggleSelectAll(cb){
+  filteredAssets.slice((currentPage-1)*pageSize,currentPage*pageSize).forEach(a=>{
+    if(cb.checked)selectedAssets.add(a.assetId);else selectedAssets.delete(a.assetId);
+  });
+  updateBulkBar();renderInventoryTable();
+}
+function updateBulkBar(){
+  const bar=$('bulk-bar');
+  if(selectedAssets.size>0){bar.style.display='flex';$('bulk-count').textContent=selectedAssets.size+' selected';}
+  else bar.style.display='none';
+}
+function clearSelection(){selectedAssets.clear();updateBulkBar();renderInventoryTable();}
+function bulkAllocate(){toast(`Opening allocation for ${selectedAssets.size} assets...`,'warn');openAllocModal(null);}
+function bulkExport(){exportExcel('inventory');}
+function toggleCols(){toast('Column visibility — coming soon!','warn');}
+
+// ── ADD / EDIT ASSET ──────────────────────────────────────────────────────────
+function openNewAsset(){
+  editAssetId=null;
+  $('modal-asset-mode').textContent='NEW ASSET';
+  $('modal-asset-title').textContent='Add Asset';
+  const fields=['am-company','am-tag','am-modelno','am-manufacturer','am-serial','am-orderno','am-supplier','am-type','am-proc','am-procspeed','am-ram','am-ramtype','am-hdd','am-mac','am-charger','am-city','am-state','am-country','am-empno','am-dept','am-manager','am-value','am-warranty','am-lastaudit','am-nextaudit','am-remarks'];
+  fields.forEach(f=>{const el=$(f);if(el)el.value='';});
+  $('am-category').value='';$('am-status').value='Available';$('am-model').innerHTML='<option value="">— Select model —</option>';
+  $('am-assetid-display').textContent='— Select category first —';$('am-assetid').value='';
+  $('am-createdat').value=nows();$('am-updatedat').value=nows();
+  ['am-allocdate','am-deallocdate','am-warrantyexp'].forEach(f=>{const el=$(f);if(el)el.value='';});
+  populateModalDropdowns();
+  switchFormTab(document.querySelector('.form-tab'),'ft-basic');
+  $('modal-asset').classList.add('open');
+}
+
+function openEditAsset(id){
+  const a=ASSETS.find(x=>x.assetId===id);if(!a)return;
+  editAssetId=id;
+  $('modal-asset-mode').textContent='EDIT ASSET';
+  $('modal-asset-title').textContent=`Edit — ${id}`;
+  $('am-assetid-display').textContent=a.assetId;$('am-assetid').value=a.assetId;
+  $('am-category').value=a.category||'';onCategoryChange(a.model);
+  const fmap={'am-company':'company','am-tag':'assetTag','am-modelno':'modelNo','am-manufacturer':'manufacturer','am-serial':'serial','am-orderno':'orderNo','am-supplier':'supplier','am-type':'type','am-proc':'processor','am-procspeed':'procSpeed','am-ram':'ram','am-ramtype':'ramType','am-hdd':'hdd','am-mac':'mac','am-charger':'charger','am-city':'city','am-state':'state','am-country':'country','am-empno':'empNo','am-dept':'dept','am-manager':'manager','am-value':'value','am-warranty':'warranty','am-warrantyexp':'warrantyExpiry','am-allocdate':'allocDate','am-deallocdate':'deallocDate','am-lastaudit':'lastAudit','am-nextaudit':'nextAudit','am-status':'status','am-username':'assignedTo','am-location':'location'};
+  Object.entries(fmap).forEach(([el,key])=>{const e=$(el);if(e&&a[key]!==undefined)e.value=a[key];});
+  $('am-createdat').value=a.createdAt||'';$('am-updatedat').value=nows();
+  populateModalDropdowns();
+  $('modal-asset').classList.add('open');
+}
+
+function onCategoryChange(setModel){
+  const cat=$('am-category').value;
+  const id=cat?nextId(cat):'— Select category first —';
+  if(!editAssetId){$('am-assetid-display').textContent=id;$('am-assetid').value=id;}
+  const models=MODEL_MAP[cat]||[];
+  $('am-model').innerHTML='<option value="">— Select model —</option>'+models.map(m=>`<option ${m===setModel?'selected':''}>${m}</option>`).join('');
+}
+
+function populateModalDropdowns(){
+  const locSel=$('am-location');locSel.innerHTML='<option value="">— Select —</option>'+LOCATIONS.map(l=>`<option>${l}</option>`).join('');
+  const empSel=$('am-username');empSel.innerHTML='<option value="">— None —</option>'+USERS.map(u=>`<option value="${u.name}">${u.name} (${u.empId})</option>`).join('');
+  empSel.onchange=function(){
+    const u=USERS.find(x=>x.name===this.value);
+    if(u){$('am-empno').value=u.empId;$('am-dept').value=u.dept||'';}
+    else{$('am-empno').value='';$('am-dept').value='';}
+  };
+}
+
+function saveAsset(){
+  const cat=$('am-category').value;
+  if(!cat){toast('Please select a category.','err');switchFormTab(document.querySelector('.form-tab'),'ft-basic');return;}
+  if(!$('am-tag').value.trim()){toast('Asset Tag is required.','err');return;}
+  const isEdit=!!editAssetId;
+  const assetId=isEdit?editAssetId:nextId(cat);
+  if(!isEdit&&ASSETS.find(a=>a.assetId===assetId)){toast('Duplicate Asset ID detected.','err');return;}
+  const g=id=>($(id)||{}).value||'';
+  const data={
+    assetId,category:cat,company:g('am-company'),assetTag:g('am-tag'),model:g('am-model'),modelNo:g('am-modelno'),
+    manufacturer:g('am-manufacturer'),serial:g('am-serial'),orderNo:g('am-orderno'),supplier:g('am-supplier'),
+    status:g('am-status'),type:g('am-type'),processor:g('am-proc'),procSpeed:g('am-procspeed'),
+    ram:g('am-ram'),ramType:g('am-ramtype'),hdd:g('am-hdd'),mac:g('am-mac'),charger:g('am-charger'),
+    location:g('am-location'),city:g('am-city'),state:g('am-state'),country:g('am-country'),
+    assignedTo:g('am-username'),empNo:g('am-empno'),dept:g('am-dept'),manager:g('am-manager'),
+    allocDate:g('am-allocdate'),deallocDate:g('am-deallocdate'),
+    value:g('am-value'),warranty:g('am-warranty'),warrantyExpiry:g('am-warrantyexp'),
+    lastAudit:g('am-lastaudit'),nextAudit:g('am-nextaudit'),
+    createdAt:isEdit?(ASSETS.find(a=>a.assetId===assetId)||{}).createdAt||nows():nows(),
+    updatedAt:nows()
+  };
+  if(isEdit){
+    const idx=ASSETS.findIndex(a=>a.assetId===editAssetId);
+    const old=ASSETS[idx];
+    ASSETS[idx]=data;
+    addAudit(assetId,'Update','Multiple fields','(previous)','(updated)','Admin');
+  }else{
+    ASSETS.push(data);
+    addAudit(assetId,'Create','—','—','New asset added','Admin');
+  }
+  cm('modal-asset');applyFilters();renderDashboard();
+  toast(isEdit?`Asset ${assetId} updated.`:`Asset ${assetId} created.`);
+  populateAllocDropdowns();
+}
+
+function openDetail(id){
+  const a=ASSETS.find(x=>x.assetId===id);if(!a)return;
+  const sections=[
+    ['Basic Info',[['Asset ID',a.assetId],['Company',a.company],['Asset Tag',a.assetTag],['Model',a.model],['Model No.',a.modelNo],['Category',a.category],['Manufacturer',a.manufacturer],['Serial No.',a.serial],['Order No.',a.orderNo],['Supplier',a.supplier],['Status','BADGE'],['Type',a.type]]],
+    ['Technical Specs',[['Processor',a.processor],['Proc. Speed',a.procSpeed],['RAM',a.ram],['RAM Type',a.ramType],['HDD/SSD',a.hdd],['MAC Address',a.mac],['Charger No.',a.charger]]],
+    ['Location',[['Default Location',a.location],['City',a.city],['State',a.state],['Country',a.country]]],
+    ['Assignment',[['Assigned To',a.assignedTo],['Emp No.',a.empNo],['Department',a.dept],['Manager',a.manager],['Alloc. Date',a.allocDate],['Dealloc. Date',a.deallocDate]]],
+    ['Finance & Warranty',[['Asset Value',a.value?'₹'+Number(a.value).toLocaleString('en-IN'):'—'],['Warranty (mo.)',a.warranty],['Warranty Expiry',a.warrantyExpiry]]],
+    ['Audit',[['Created At',a.createdAt],['Last Updated',a.updatedAt],['Last Audit',a.lastAudit],['Next Audit',a.nextAudit]]],
+  ];
+  $('detail-title').textContent=`${a.assetId} — ${a.model||a.assetTag}`;
+  $('detail-body').innerHTML=sections.map(([title,rows])=>`
+    <div style="margin-bottom:18px;">
+      <div class="section-label" style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.08em;padding-bottom:7px;border-bottom:1.5px solid var(--b1);margin-bottom:10px;">${title}</div>
+      <div class="detail-grid">${rows.map(([k,v])=>`<div class="dg-item"><div class="dk">${k}</div><div class="dv">${k==='Status'?statusBadge(a.status):(v||'—')}</div></div>`).join('')}</div>
+    </div>`).join('');
+  $('detail-foot').innerHTML=`
+    <button class="btn btn-ghost" onclick="cm('modal-detail')">Close</button>
+    <button class="btn btn-amber" onclick="cm('modal-detail');openEditAsset('${id}')"><i class="ti ti-edit"></i>Edit</button>
+    ${a.status==='Available'?`<button class="btn btn-primary" onclick="cm('modal-detail');openAllocModal('${id}')"><i class="ti ti-transfer"></i>Allocate</button>`:''}
+    ${a.status==='Allocated'?`<button class="btn btn-red" onclick="cm('modal-detail');openDealloc('${id}')"><i class="ti ti-arrow-back"></i>Return</button>`:''}`;
+  $('modal-detail').classList.add('open');
+}
+
+// ── ALLOCATION ────────────────────────────────────────────────────────────────
+function populateAllocDropdowns(){
+  const avail=ASSETS.filter(a=>a.status==='Available');
+  $('al-asset').innerHTML='<option value="">— Select available asset —</option>'+avail.map(a=>`<option value="${a.assetId}">${a.assetId} | ${a.assetTag} | ${a.model||a.category}</option>`).join('');
+  $('al-emp').innerHTML='<option value="">— Select employee —</option>'+USERS.map(u=>`<option value="${u.name}">${u.name} (${u.empId} · ${u.dept})</option>`).join('');
+  $('al-location').innerHTML='<option value="">— Select —</option>'+LOCATIONS.map(l=>`<option>${l}</option>`).join('');
+  const depts=[...new Set(USERS.map(u=>u.dept).filter(Boolean))];
+  $('af-dept').innerHTML='<option value="">All Departments</option>'+depts.map(d=>`<option>${d}</option>`).join('');
+  const cats=[...new Set(ALLOCATIONS.map(a=>a.category).filter(Boolean))];
+  $('af-cat').innerHTML='<option value="">All Categories</option>'+cats.map(c=>`<option>${c}</option>`).join('');
+}
+
+function openAllocModal(assetId){
+  populateAllocDropdowns();
+  $('al-asset').value=assetId||'';
+  if(assetId)onAllocAssetSelect(assetId);
+  ['al-cat','al-model','al-serial','al-empno','al-manager'].forEach(f=>{const el=$(f);if(el&&f!=='al-manager')el.value='';});
+  $('al-dept').value='';$('al-status').value='Active';$('al-remarks').value='';
+  $('al-date').value=today();$('al-return').value='';
+  $('alloc-modal-title').textContent=assetId?`Allocate ${assetId}`:'New Allocation';
+  $('modal-alloc').classList.add('open');
+}
+
+function onAllocAssetSelect(id){
+  const a=ASSETS.find(x=>x.assetId===id);if(!a)return;
+  $('al-cat').value=a.category||'';
+  $('al-model').value=a.model||'';
+  $('al-serial').value=a.serial||'';
+}
+
+function onAllocEmpSelect(name){
+  const u=USERS.find(x=>x.name===name);
+  if(u){$('al-empno').value=u.empId;$('al-dept').value=u.dept||'';}
+}
+
+function saveAllocation(){
+  const assetId=$('al-asset').value;
+  const emp=$('al-emp').value;
+  const dt=$('al-date').value;
+  if(!assetId){toast('Please select an asset.','err');return;}
+  if(!emp){toast('Please select an employee.','err');return;}
+  if(!dt){toast('Please enter allocation date.','err');return;}
+  const a=ASSETS.find(x=>x.assetId===assetId);
+  if(!a){toast('Asset not found.','err');return;}
+  if(a.status!=='Available'){toast('Asset is not available for allocation.','warn');return;}
+  const rec={
+    id:ALLOCATIONS.length+1,assetId,assetTag:a.assetTag,category:a.category,model:a.model,serial:a.serial,
+    assignedTo:emp,empNo:$('al-empno').value,dept:$('al-dept').value,manager:$('al-manager').value,
+    location:$('al-location').value,allocDate:dt,returnDate:$('al-return').value,
+    allocBy:'Admin',status:$('al-status').value,remarks:$('al-remarks').value,
+    action:'Allocate',active:true
+  };
+  ALLOCATIONS.unshift(rec);
+  a.status='Allocated';a.assignedTo=emp;a.empNo=$('al-empno').value;a.dept=$('al-dept').value;
+  a.manager=$('al-manager').value;a.allocDate=dt;a.updatedAt=nows();
+  addAudit(assetId,'Allocated','status','Available','Allocated',rec.allocBy,`Allocated to ${emp}`);
+  cm('modal-alloc');applyFilters();renderDashboard();renderAllocation();
+  toast(`${assetId} allocated to ${emp}.`);
+}
+
+function openDealloc(id){
+  deallocAssetId=id;
+  const a=ASSETS.find(x=>x.assetId===id);
+  const alloc=ALLOCATIONS.find(x=>x.assetId===id&&x.active);
+  $('dealloc-info').innerHTML=`<strong>${id}</strong> — ${a?.model||a?.assetTag}<br>Currently with: <strong>${alloc?.assignedTo||a?.assignedTo||'—'}</strong> · ${alloc?.dept||a?.dept||'—'}`;
+  $('dl-date').value=today();$('dl-status').value='Available';$('dl-remarks').value='';
+  $('modal-dealloc').classList.add('open');
+}
+
+function confirmDealloc(){
+  if(!deallocAssetId)return;
+  const dt=$('dl-date').value;
+  if(!dt){toast('Enter deallocated date.','err');return;}
+  const a=ASSETS.find(x=>x.assetId===deallocAssetId);
+  const oldStatus=a.status;const oldEmp=a.assignedTo;
+  a.status=$('dl-status').value;a.deallocDate=dt;a.assignedTo='';a.empNo='';a.updatedAt=nows();
+  const alloc=ALLOCATIONS.find(x=>x.assetId===deallocAssetId&&x.active);
+  if(alloc){alloc.active=false;alloc.deallocDate=dt;alloc.action='Return';alloc.remarks+=' | '+$('dl-remarks').value;}
+  ALLOCATIONS.unshift({id:ALLOCATIONS.length+1,assetId:deallocAssetId,assetTag:a.assetTag,category:a.category,model:a.model,serial:a.serial,assignedTo:oldEmp,empNo:'',dept:'',allocDate:'',returnDate:dt,deallocDate:dt,allocBy:'Admin',status:'Returned',remarks:$('dl-remarks').value,action:'Return',active:false});
+  addAudit(deallocAssetId,'Returned','status',oldStatus,$('dl-status').value,'Admin',`Returned from ${oldEmp}`);
+  cm('modal-dealloc');applyFilters();renderDashboard();renderAllocation();
+  toast(`${deallocAssetId} returned & marked ${$('dl-status').value}.`);
+  deallocAssetId=null;
+}
+
+function renderAllocation(){
+  populateAllocDropdowns();
+  // Stats
+  const active=ALLOCATIONS.filter(a=>a.active).length;
+  const hist=ALLOCATIONS.filter(a=>!a.active).length;
+  const avail=ASSETS.filter(a=>a.status==='Available').length;
+  const total=ALLOCATIONS.length;
+  $('alloc-stats').innerHTML=`
+    <div class="stat-card" style="--ac:#0B63CE"><div class="stat-ic" style="background:#DBEAFE"><i class="ti ti-transfer" style="color:#0B63CE"></i></div><div class="stat-n">${active}</div><div class="stat-l">Active Allocations</div></div>
+    <div class="stat-card" style="--ac:#059669"><div class="stat-ic" style="background:#D1FAE5"><i class="ti ti-circle-check" style="color:#059669"></i></div><div class="stat-n">${avail}</div><div class="stat-l">Available Assets</div></div>
+    <div class="stat-card" style="--ac:#7C3AED"><div class="stat-ic" style="background:#EDE9FE"><i class="ti ti-history" style="color:#7C3AED"></i></div><div class="stat-n">${hist}</div><div class="stat-l">Historical</div></div>
+    <div class="stat-card" style="--ac:#D97706"><div class="stat-ic" style="background:#FEF3C7"><i class="ti ti-clipboard-list" style="color:#D97706"></i></div><div class="stat-n">${total}</div><div class="stat-l">Total Records</div></div>`;
+  renderAllocActive();
+  renderAllocHistory();
+  renderAvailableCards();
+}
+
+function switchAllocTab(tab){
+  allocTab=tab;
+  ['active','history','available'].forEach(t=>{
+    $('at-'+t).classList.toggle('active',t===tab);
+    $('alloc-'+t+'-pane').style.display=t===tab?'block':'none';
+  });
+}
+
+function renderAllocActive(){
+  const q=($('alloc-search').value||'').toLowerCase();
+  const dept=$('af-dept').value;
+  const cat=$('af-cat').value;
+  let list=ALLOCATIONS.filter(a=>a.active);
+  if(q)list=list.filter(a=>['assetId','assetTag','assignedTo','empNo','dept','model','serial'].some(k=>(a[k]||'').toLowerCase().includes(q)));
+  if(dept)list=list.filter(a=>a.dept===dept);
+  if(cat)list=list.filter(a=>a.category===cat);
+  $('alloc-active-body').innerHTML=list.length?list.map(a=>`<tr>
+    <td><span style="font-family:var(--mono);font-size:11px;color:var(--teal);font-weight:600;">${a.assetId}</span></td>
+    <td style="font-weight:500">${a.assetTag||'—'}</td>
+    <td><span class="badge bd-alloc">${a.category||'—'}</span></td>
+    <td style="font-size:11px">${a.model||'—'}</td>
+    <td style="font-family:var(--mono);font-size:11px;color:var(--tx2)">${a.serial||'—'}</td>
+    <td style="font-weight:500">${a.assignedTo||'—'}</td>
+    <td style="font-family:var(--mono);font-size:11px">${a.empNo||'—'}</td>
+    <td style="font-size:11px;color:var(--tx2)">${a.dept||'—'}</td>
+    <td style="font-size:11px;color:var(--tx2)">${a.manager||'—'}</td>
+    <td style="font-size:11px;color:var(--tx2)">${a.location||'—'}</td>
+    <td style="font-family:var(--mono);font-size:11px">${a.allocDate||'—'}</td>
+    <td style="font-family:var(--mono);font-size:11px;color:${a.returnDate&&new Date(a.returnDate)<new Date()?'#DC2626':'var(--tx2)'}">${a.returnDate||'—'}</td>
+    <td style="font-size:11px">${a.allocBy||'—'}</td>
+    <td>${statusBadge(a.status)}</td>
+    <td style="white-space:nowrap">
+      <button class="btn btn-sm btn-red" onclick="openDealloc('${a.assetId}')"><i class="ti ti-arrow-back"></i>Return</button>
+    </td>
+  </tr>`).join(''):`<tr><td colspan="15"><div class="empty"><i class="ti ti-transfer"></i><p>No active allocations.</p></div></td></tr>`;
+}
+
+function renderAllocHistory(){
+  const hist=ALLOCATIONS.filter(a=>!a.active);
+  $('alloc-hist-body').innerHTML=hist.length?hist.map((a,i)=>`<tr>
+    <td class="mono" style="color:var(--tx3)">${i+1}</td>
+    <td style="font-family:var(--mono);font-size:11px;color:var(--teal)">${a.assetId}</td>
+    <td>${a.assetTag||'—'}</td>
+    <td style="font-size:11px">${a.model||'—'}</td>
+    <td style="font-weight:500">${a.assignedTo||'—'}</td>
+    <td style="font-family:var(--mono);font-size:11px">${a.empNo||'—'}</td>
+    <td style="font-size:11px;color:var(--tx2)">${a.dept||'—'}</td>
+    <td style="font-family:var(--mono);font-size:11px">${a.allocDate||'—'}</td>
+    <td style="font-family:var(--mono);font-size:11px">${a.deallocDate||'—'}</td>
+    <td style="font-size:11px">${a.allocBy||'—'}</td>
+    <td><span class="badge" style="background:var(--amber-dim);color:var(--amber)">${a.action||'—'}</span></td>
+    <td style="font-size:11px;color:var(--tx2)">${a.remarks||'—'}</td>
+  </tr>`).join(''):`<tr><td colspan="12"><div class="empty"><i class="ti ti-history"></i><p>No allocation history.</p></div></td></tr>`;
+}
+
+function renderAvailableCards(){
+  const avail=ASSETS.filter(a=>a.status==='Available');
+  $('avail-cards').innerHTML=avail.length?avail.map(a=>`
+    <div class="alloc-card">
+      <div class="alloc-card-icon"><i class="ti ${{'Laptop':'ti-device-laptop','Desktop':'ti-desktop','Monitor':'ti-device-tv','Printer':'ti-printer','Server':'ti-server','Mobile':'ti-device-mobile','Tablet':'ti-device-tablet'}[a.category]||'ti-box'}"></i></div>
+      <div class="alloc-card-body">
+        <div class="alloc-card-id">${a.assetId}</div>
+        <div class="alloc-card-name">${a.model||a.assetTag}</div>
+        <div class="alloc-card-meta">${a.category} · ${a.manufacturer||'—'} · Serial: ${a.serial||'—'} · ${a.location||'—'}</div>
+      </div>
+      <div class="alloc-card-actions">
+        <span class="badge bd-avail">Available</span>
+        <button class="btn btn-sm btn-primary" onclick="openAllocModal('${a.assetId}')"><i class="ti ti-transfer"></i>Allocate</button>
+      </div>
+    </div>`).join(''):`<div class="empty"><i class="ti ti-circle-check"></i><p>No assets available for allocation. Add assets in the Inventory tab.</p></div>`;
+}
+
+// ── AUDIT LOG ─────────────────────────────────────────────────────────────────
+function renderAuditLog(){
+  $('audit-body').innerHTML=AUDIT_LOG.length?AUDIT_LOG.map((l,i)=>`<tr>
+    <td class="mono" style="color:var(--tx3)">${l.id}</td>
+    <td style="font-family:var(--mono);font-size:11px;color:var(--tx2)">${l.ts}</td>
+    <td><span style="font-family:var(--mono);font-size:11px;color:var(--teal);font-weight:600">${l.assetId}</span></td>
+    <td><span class="badge ${l.action==='Create'?'bd-avail':l.action==='Allocated'?'bd-alloc':l.action==='Returned'?'bd-maint':l.action==='Update'?'bd-pending':'bd-retire'}">${l.action}</span></td>
+    <td style="font-size:11px">${l.field||'—'}</td>
+    <td style="font-size:11px;color:var(--tx3)">${l.oldVal||'—'}</td>
+    <td style="font-size:11px;font-weight:500">${l.newVal||'—'}</td>
+    <td style="font-size:11px">${l.by||'—'}</td>
+    <td style="font-size:11px;color:var(--tx2)">${l.notes||'—'}</td>
+  </tr>`).join(''):`<tr><td colspan="9"><div class="empty"><i class="ti ti-clipboard-list"></i><p>No audit records yet.</p></div></td></tr>`;
+}
+
+// ── EXPORT ────────────────────────────────────────────────────────────────────
+function exportExcel(type){
+  let data,filename;
+  if(type==='inventory'||!type){data=filteredAssets.length?filteredAssets:ASSETS;filename='Asset_Inventory';}
+  else if(type==='allocation'){data=ALLOCATIONS;filename='Asset_Allocation';}
+  else if(type==='audit'){data=AUDIT_LOG;filename='Audit_Log';}
+  if(!data.length){toast('No data to export.','warn');return;}
+  const ws=XLSX.utils.json_to_sheet(data);
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Sheet1');
+  XLSX.writeFile(wb,`${filename}_${today()}.xlsx`);
+  toast(`Exported ${data.length} records to Excel.`);
+}
+
+function exportPDF(type){
+  const cols=type==='allocation'?['Asset ID','Asset Tag','Category','Assigned To','Emp No.','Dept.','Alloc. Date','Status']:['Asset ID','Asset Tag','Category','Model','Status','Assigned To','Location','Warranty'];
+  const rows=(type==='allocation'?ALLOCATIONS.filter(a=>a.active):filteredAssets.length?filteredAssets:ASSETS).slice(0,100);
+  let html=`<html><head><title>ITAM Report</title><style>body{font-family:sans-serif;font-size:11px;}table{width:100%;border-collapse:collapse;}th{background:#0B2D5E;color:#fff;padding:6px 8px;text-align:left;}td{padding:5px 8px;border-bottom:1px solid #e0e0e0;}h2{color:#0B2D5E;}</style></head><body>
+    <h2>ITAM — ${type==='allocation'?'Asset Allocation':'Asset Inventory'}</h2>
+    <p>Generated: ${nows()} | Records: ${rows.length}</p>
+    <table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>`;
+  rows.forEach(r=>{html+=`<tr>${cols.map(c=>`<td>${r[Object.keys(r).find(k=>k.toLowerCase().replace(/[\s.]/g,'').includes(c.toLowerCase().replace(/[\s.]/g,'')))]||'—'}</td>`).join('')}</tr>`;});
+  html+='</tbody></table></body></html>';
+  const w=window.open('','_blank');w.document.write(html);w.document.close();w.print();
+  toast('PDF print dialog opened.');
+}
+
+// ── IMPORT ────────────────────────────────────────────────────────────────────
+let parsedImportRows=[];
+function handleFileImport(input){
+  const file=input.files[0];if(!file)return;
+  if(file.size>5*1024*1024){toast('File too large (max 5MB).','err');return;}
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'binary'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      parsedImportRows=rows;
+      showImportPreview(rows);
+    }catch(err){toast('Failed to parse file: '+err.message,'err');}
+  };
+  reader.readAsBinaryString(file);
+}
+function handleDrop(e){
+  e.preventDefault();$('drop-zone').classList.remove('drag');
+  const file=e.dataTransfer.files[0];
+  if(file){const inp=$('file-input');inp.files=e.dataTransfer.files;handleFileImport(inp);}
+}
+function showImportPreview(rows){
+  if(!rows.length){toast('No data rows found.','warn');return;}
+  const cols=Object.keys(rows[0]);
+  let tbl=`<table style="border-collapse:collapse;width:100%;"><thead><tr>${cols.map(c=>`<th style="background:#0B2D5E;color:#fff;padding:5px 8px;font-size:10px;">${c}</th>`).join('')}</tr></thead><tbody>`;
+  rows.slice(0,10).forEach(r=>{tbl+=`<tr>${cols.map(c=>`<td style="padding:4px 8px;border:1px solid #e0e0e0;font-size:11px;">${r[c]||'—'}</td>`).join('')}</tr>`;});
+  tbl+='</tbody></table>';
+  $('import-preview-table').innerHTML=tbl;
+  $('import-preview').style.display='block';
+  $('import-status').innerHTML=`<span style="color:var(--teal);font-weight:600;">${rows.length} rows ready to import.</span>`;
+}
+function confirmImport(){
+  let added=0,skipped=0;
+  parsedImportRows.forEach(row=>{
+    const cat=row['Category']||row['category']||'Other';
+    const tag=row['Asset Tag']||row['asset_tag']||row['assetTag']||'';
+    if(!tag){skipped++;return;}
+    const id=nextId(cat);
+    if(ASSETS.find(a=>a.assetTag===tag)){skipped++;return;}
+    ASSETS.push({assetId:id,category:cat,assetTag:tag,company:row['Company']||'',model:row['Model']||'',modelNo:row['Model No.']||'',manufacturer:row['Manufacturer']||'',serial:row['Serial Number']||row['Serial']||'',orderNo:row['Order Number']||'',supplier:row['Supplier']||'',status:row['Status']||'Available',location:row['Asset Default Location']||row['Location']||'',city:row['City']||'',state:row['State']||'',country:row['Country']||'',assignedTo:row['Username']||'',empNo:row['Employee No.']||'',dept:row['Department']||'',manager:row['Manager']||'',value:row['Asset Value']||'',warranty:row['Warranty']||'',warrantyExpiry:row['Warranty Expiry Date']||'',processor:row['Processor']||'',procSpeed:row['Processor Speed']||'',ram:row['RAM']||'',ramType:row['RAM Type']||'',hdd:row['HDD/SSD']||'',mac:row['MAC Address']||'',createdAt:nows(),updatedAt:nows()});
+    added++;
+  });
+  applyFilters();renderDashboard();
+  $('import-status').innerHTML=`<span style="color:#059669;font-weight:600;">✓ ${added} assets imported. ${skipped} skipped (duplicates/missing tag).</span>`;
+  toast(`${added} assets imported.`);
+  parsedImportRows=[];
+}
+function cancelImport(){parsedImportRows=[];$('import-preview').style.display='none';$('file-input').value='';}
+function downloadTemplate(fmt){
+  const cols=['Company','Asset Tag','Category','Model','Model No.','Manufacturer','Serial Number','Order Number','Supplier','Asset Default Location','City','State','Country','Status','Username','Employee No.','Manager','Department','Asset Value','Warranty','Warranty Expiry Date','MAC Address','Processor','Processor Speed','RAM','RAM Type','HDD/SSD'];
+  const example=[['TechCorp','CHN-L-0001','Laptop','Dell Latitude 3400','20DS0012IG','Dell','SN123456','PO-2024-001','Rashi Peripherals','Chennai HO','Chennai','Tamil Nadu','India','Available','ravi.kumar','EMP-0001','Priya S.','Finance','65000','36','2027-01-31','AA:BB:CC:DD:EE:FF','Intel i5-1135G7','2.4GHz','16GB','DDR4','512GB SSD']];
+  if(fmt==='csv'){
+    const csv=[cols.join(','),...example.map(r=>r.map(v=>`"${v}"`).join(','))].join('\n');
+    const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='ITAM_Import_Template.csv';a.click();
+  }else{
+    const ws=XLSX.utils.aoa_to_sheet([cols,...example]);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Assets');XLSX.writeFile(wb,'ITAM_Import_Template.xlsx');
+  }
+  toast('Template downloaded.');
+}
+
+// ── REPORTS ───────────────────────────────────────────────────────────────────
+function renderReports(){
+  const rpts=[
+    {title:'Asset Inventory Report',desc:'Full export of all assets with complete details.',icon:'ti-device-laptop',color:'#0B63CE',fn:()=>exportExcel('inventory')},
+    {title:'Allocation Report',desc:'All active and historical asset allocations.',icon:'ti-transfer',color:'#0BA5A4',fn:()=>exportExcel('allocation')},
+    {title:'Warranty Expiry Report',desc:'Assets with warranty expiring in 90 days.',icon:'ti-alert-triangle',color:'#D97706',fn:()=>{$('f-warranty').value='expiring';showPage('inventory');}},
+    {title:'Audit Log Report',desc:'Complete audit trail of all asset changes.',icon:'ti-clipboard-list',color:'#7C3AED',fn:()=>exportExcel('audit')},
+    {title:'Assets by Location',desc:'Asset count and details grouped by location.',icon:'ti-map-pin',color:'#059669',fn:()=>exportExcel('inventory')},
+    {title:'Available Assets',desc:'All assets currently available for allocation.',icon:'ti-circle-check',color:'#059669',fn:()=>{$('f-status').value='Available';showPage('inventory');}},
+  ];
+  $('report-cards').innerHTML=rpts.map(r=>`
+    <div style="background:var(--s0);border:1px solid var(--b1);border-radius:var(--rl);padding:20px;box-shadow:var(--sh);cursor:pointer;transition:all .15s;position:relative;overflow:hidden;" onclick="(${r.fn.toString()})()">
+      <div style="width:44px;height:44px;border-radius:10px;background:${r.color}18;display:flex;align-items:center;justify-content:center;margin-bottom:12px;">
+        <i class="ti ${r.icon}" style="font-size:22px;color:${r.color};"></i>
+      </div>
+      <div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:5px;">${r.title}</div>
+      <div style="font-size:12px;color:var(--tx2);">${r.desc}</div>
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${r.color};"></div>
+    </div>`).join('');
+}
+
+// ── FORM TABS ─────────────────────────────────────────────────────────────────
+function switchFormTab(btn,sectionId){
+  document.querySelectorAll('.form-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.form-section').forEach(s=>s.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  const sec=$(sectionId);if(sec)sec.classList.add('active');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+// Seed 5 sample assets for demonstration
+const seedAssets=[
+  {assetId:'L-0001',category:'Laptop',company:'TechCorp',assetTag:'CHN-L-0001',model:'Dell Latitude 3400',modelNo:'20DS0012IG',manufacturer:'Dell',serial:'SN-DELL-001',orderNo:'PO-2024-001',supplier:'Rashi Peripherals',status:'Allocated',type:'Physical',processor:'Intel i5-1135G7',procSpeed:'2.4GHz',ram:'16 GB',ramType:'DDR4',hdd:'512 GB SSD',mac:'AA:BB:CC:DD:EE:FF',charger:'CHG-001',location:'Chennai Head Office',city:'Chennai',state:'Tamil Nadu',country:'India',assignedTo:'Ravi Kumar',empNo:'EMP-0001',dept:'Finance',manager:'Priya S.',allocDate:'2024-01-15',deallocDate:'',value:'65000',warranty:'36',warrantyExpiry:'2027-01-31',lastAudit:'2025-01-01',nextAudit:'',createdAt:'2024-01-15 09:00:00',updatedAt:'2024-01-15 09:00:00'},
+  {assetId:'L-0002',category:'Laptop',company:'TechCorp',assetTag:'CHN-L-0002',model:'HP EliteBook 840 G3',modelNo:'',manufacturer:'HP',serial:'SN-HP-002',orderNo:'PO-2024-002',supplier:'Redington',status:'Available',type:'Physical',processor:'Intel i7-6600U',procSpeed:'2.6GHz',ram:'8 GB',ramType:'DDR4',hdd:'256 GB SSD',mac:'',charger:'CHG-002',location:'Bangalore Tech Park',city:'Bangalore',state:'Karnataka',country:'India',assignedTo:'',empNo:'',dept:'',manager:'',allocDate:'',deallocDate:'',value:'45000',warranty:'12',warrantyExpiry:'2025-06-30',lastAudit:'',nextAudit:'2025-08-01',createdAt:'2024-02-01 10:00:00',updatedAt:'2024-02-01 10:00:00'},
+  {assetId:'D-0001',category:'Desktop',company:'TechCorp',assetTag:'CHN-D-0001',model:'Dell Optiplex 3070',modelNo:'',manufacturer:'Dell',serial:'SN-DOPT-001',orderNo:'PO-2024-003',supplier:'Rashi Peripherals',status:'Available',type:'Physical',processor:'Intel i3-9100',procSpeed:'3.6GHz',ram:'8 GB',ramType:'DDR4',hdd:'1 TB HDD',mac:'',charger:'',location:'Chennai Head Office',city:'Chennai',state:'Tamil Nadu',country:'India',assignedTo:'',empNo:'',dept:'',manager:'',allocDate:'',deallocDate:'',value:'35000',warranty:'36',warrantyExpiry:'2027-03-31',lastAudit:'',nextAudit:'',createdAt:'2024-03-01 11:00:00',updatedAt:'2024-03-01 11:00:00'},
+  {assetId:'MO-0001',category:'Monitor',company:'TechCorp',assetTag:'CHN-MO-0001',model:'Dell E1916HE',modelNo:'',manufacturer:'Dell',serial:'SN-DMON-001',orderNo:'PO-2024-004',supplier:'Rashi Peripherals',status:'Allocated',type:'Physical',processor:'',procSpeed:'',ram:'',ramType:'',hdd:'',mac:'',charger:'',location:'Chennai Head Office',city:'Chennai',state:'Tamil Nadu',country:'India',assignedTo:'Priya S.',empNo:'EMP-0002',dept:'IT Ops',manager:'Admin',allocDate:'2024-03-15',deallocDate:'',value:'12000',warranty:'24',warrantyExpiry:'2026-03-31',lastAudit:'',nextAudit:'2025-09-01',createdAt:'2024-03-15 09:00:00',updatedAt:'2024-03-15 09:00:00'},
+  {assetId:'P-0001',category:'Printer',company:'TechCorp',assetTag:'CHN-P-0001',model:'HP LaserJet Pro MFP M126nw',modelNo:'',manufacturer:'HP',serial:'SN-HPPR-001',orderNo:'PO-2024-005',supplier:'HP India',status:'Under Maintenance',type:'Physical',processor:'',procSpeed:'',ram:'',ramType:'',hdd:'',mac:'',charger:'',location:'Chennai Head Office',city:'Chennai',state:'Tamil Nadu',country:'India',assignedTo:'',empNo:'',dept:'IT Ops',manager:'',allocDate:'',deallocDate:'',value:'18000',warranty:'12',warrantyExpiry:'2025-05-31',lastAudit:'',nextAudit:'',createdAt:'2024-05-01 09:00:00',updatedAt:'2024-05-01 09:00:00'},
+];
+ASSETS.push(...seedAssets);
+// Seed allocation history
+ALLOCATIONS.push({id:1,assetId:'L-0001',assetTag:'CHN-L-0001',category:'Laptop',model:'Dell Latitude 3400',serial:'SN-DELL-001',assignedTo:'Ravi Kumar',empNo:'EMP-0001',dept:'Finance',manager:'Priya S.',location:'Chennai Head Office',allocDate:'2024-01-15',returnDate:'',deallocDate:'',allocBy:'Admin',status:'Active',remarks:'Primary work laptop',action:'Allocate',active:true});
+ALLOCATIONS.push({id:2,assetId:'MO-0001',assetTag:'CHN-MO-0001',category:'Monitor',model:'Dell E1916HE',serial:'SN-DMON-001',assignedTo:'Priya S.',empNo:'EMP-0002',dept:'IT Ops',manager:'Admin',location:'Chennai Head Office',allocDate:'2024-03-15',returnDate:'',deallocDate:'',allocBy:'Admin',status:'Active',remarks:'',action:'Allocate',active:true});
+// Add audit entries
+AUDIT_LOG.push({id:1,ts:'2024-01-15 09:00:00',assetId:'L-0001',action:'Create',field:'—',oldVal:'—',newVal:'New asset added',by:'Admin',notes:'Initial creation'});
+AUDIT_LOG.push({id:2,ts:'2024-01-15 09:05:00',assetId:'L-0001',action:'Allocated',field:'status',oldVal:'Available',newVal:'Allocated',by:'Admin',notes:'Allocated to Ravi Kumar'});
+
+// Boot
+showPage('dashboard');
+</script>
+</body>
+</html>
