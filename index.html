@@ -742,6 +742,52 @@ tbody tr.rc:hover td { background: #EEF4FF; }
 .b-loc-remote     { background: var(--amber); }
 .b-loc-inactive   { background: var(--tx3); }
 .b-loc-construction { background: var(--purple); }
+/* ══ ASSET ALLOCATION — TECHNICAL/ENTERPRISE UI ═════════════════════════════════ */
+.alloc-hero { background: linear-gradient(135deg, var(--sb) 0%, #0F3F73 100%); border-radius: var(--rl); padding: 18px 22px; margin-bottom: 18px; position: relative; overflow: hidden; box-shadow: var(--sh-md); }
+.alloc-hero::before { content:''; position:absolute; top:-40%; right:-8%; width:220px; height:220px; background:radial-gradient(circle, rgba(11,165,164,.25), transparent 70%); }
+.alloc-hero::after { content:''; position:absolute; inset:0; background-image: linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px); background-size: 22px 22px; }
+.alloc-hero-row { display:flex; align-items:center; justify-content:space-between; gap:16px; position:relative; z-index:1; flex-wrap:wrap; }
+.alloc-hero-title { display:flex; align-items:center; gap:12px; }
+.alloc-hero-ic { width:42px; height:42px; border-radius:10px; background:linear-gradient(135deg,var(--accent),var(--primary)); display:flex; align-items:center; justify-content:center; box-shadow:0 3px 12px rgba(11,165,164,.4); flex-shrink:0; }
+.alloc-hero-ic .ti { font-size:21px; color:#fff; }
+.alloc-hero-title h2 { font-size:16px; font-weight:700; color:#fff; letter-spacing:-.01em; }
+.alloc-hero-title p { font-size:11px; color:rgba(255,255,255,.5); margin-top:2px; font-family:var(--mono); letter-spacing:.02em; }
+.alloc-hero-actions { display:flex; gap:8px; }
+.alloc-hero-actions .btn { border-color:rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:#fff; }
+.alloc-hero-actions .btn:hover { background:rgba(255,255,255,.14); }
+.alloc-hero-actions .btn-primary { background:linear-gradient(90deg,var(--accent),var(--primary)); border:none; }
+
+.qa-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; }
+.qa-card { background:var(--s0); border:1px solid var(--b1); border-radius:var(--r); padding:13px 14px; cursor:pointer; transition:all .15s; display:flex; align-items:center; gap:11px; box-shadow:var(--sh); }
+.qa-card:hover { border-color:var(--qa-color, var(--primary)); transform:translateY(-1px); box-shadow:var(--sh-md); }
+.qa-ic { width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0; background:var(--qa-bg); }
+.qa-ic .ti { font-size:16px; color:var(--qa-color); }
+.qa-label { font-size:12px; font-weight:700; color:var(--tx1); }
+.qa-sub { font-size:10px; color:var(--tx3); margin-top:1px; }
+
+.tech-panel-head { display:flex; align-items:center; gap:8px; padding:12px 16px; border-bottom:1px solid var(--b1); background:var(--s1); }
+.tech-panel-head .ti { font-size:15px; color:var(--accent); }
+.tech-panel-head h4 { font-size:11px; font-weight:700; color:var(--tx1); text-transform:uppercase; letter-spacing:.08em; }
+.tech-panel-head .cnt { margin-left:auto; font-family:var(--mono); font-size:10px; font-weight:700; color:var(--accent); background:var(--accent-d); padding:2px 9px; border-radius:20px; }
+
+.asset-row { display:flex; align-items:center; gap:11px; padding:10px 14px; border-bottom:1px solid var(--b1); transition:background .1s; }
+.asset-row:last-child { border-bottom:none; }
+.asset-row:hover { background:var(--s1); }
+.asset-row-ic { width:30px; height:30px; border-radius:7px; background:var(--accent-d); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.asset-row-ic .ti { font-size:14px; color:var(--accent); }
+.asset-row-id { font-family:var(--mono); font-size:10px; color:var(--tx3); letter-spacing:.03em; }
+.asset-row-name { font-size:12px; font-weight:600; color:var(--tx1); }
+.asset-row-meta { font-size:10px; color:var(--tx3); margin-top:1px; }
+
+.activity-feed { padding:6px 16px; }
+.activity-row { display:flex; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid var(--b1); }
+.activity-row:last-child { border-bottom:none; }
+.activity-dot { width:7px; height:7px; border-radius:50%; margin-top:5px; flex-shrink:0; box-shadow:0 0 0 3px var(--dot-ring); }
+.activity-txt { font-size:12px; color:var(--tx1); line-height:1.5; }
+.activity-txt strong { font-weight:700; }
+.activity-meta { font-size:10px; color:var(--tx3); font-family:var(--mono); margin-top:2px; }
+
+.tech-divider { height:1px; background:linear-gradient(90deg, transparent, var(--b1) 15%, var(--b1) 85%, transparent); margin:0; }
 </style>
 </head>
 <body>
@@ -1071,172 +1117,6 @@ tbody tr.rc:hover td { background: #EEF4FF; }
       <div id="appr-body"></div>
     </div>
 
-    <!-- ADMIN: Assets -->
-    <div class="page-wrap" id="page-assets">
-      <div class="ph">
-        <h2>Asset Inventory</h2>
-        <div class="ph-r">
-          <button class="btn btn-green" onclick="exportCSV('assets')"><i class="ti ti-download"></i> Export CSV</button>
-          <button class="btn" id="asset-alloc-btn" onclick="showPage('asset-allocation')" style="border-color:var(--teal);color:var(--teal);background:var(--teal-dim);display:none;"><i class="ti ti-transfer"></i> Asset Allocation</button>
-          <button class="btn btn-primary" id="asset-add-btn" onclick="openAssetModal(null)" style="display:none;"><i class="ti ti-plus"></i> Add asset</button>
-          <button class="btn" id="tech-assign-btn" onclick="showPage('asset-assign')" style="display:none;"><i class="ti ti-transfer"></i> Assign asset</button>
-        </div>
-      </div>
-      <!-- Stats always on top -->
-      <div class="stats" id="asset-stats" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px;"></div>
-      <!-- Filter bar -->
-      <div class="fbar">
-        <button class="fb on" onclick="sfAsset(this,'all')">All</button>
-        <button class="fb" onclick="sfAsset(this,'inuse')">In use</button>
-        <button class="fb" onclick="sfAsset(this,'available')">Available</button>
-        <button class="fb" onclick="sfAsset(this,'repair')">In repair</button>
-        <button class="fb" onclick="sfAsset(this,'retired')">Retired</button>
-        <button class="fb" onclick="sfAsset(this,'disposed')">Disposed</button>
-        <div class="sw" style="margin-left:auto;">
-          <i class="ti ti-search"></i>
-          <input type="text" placeholder="Search assets..." oninput="filterAssets(this.value)">
-        </div>
-      </div>
-      <!-- Scrollable table -->
-      <div class="card" style="overflow-x:auto;">
-        <table style="min-width:1400px;">
-          <thead><tr>
-            <th>Asset Tag</th>
-            <th>Model</th>
-            <th>Category</th>
-            <th>Manufacturer</th>
-            <th>Serial No.</th>
-            <th>Order No.</th>
-            <th>Supplier</th>
-            <th>Location</th>
-            <th>City</th>
-            <th>Assigned to</th>
-            <th>Emp No.</th>
-            <th>Username</th>
-            <th>Manager</th>
-            <th>Department</th>
-            <th>Status</th>
-            <th>Warranty</th>
-            <th>Warranty Exp.</th>
-            <th>Value (₹)</th>
-            <th>Alloc. Date</th>
-            <th>Dealloc. Date</th>
-            <th>MAC Address</th>
-            <th>Processor</th>
-            <th>RAM</th>
-            <th>HDD</th>
-            <th>Actions</th>
-          </tr></thead>
-          <tbody id="asset-body"></tbody>
-        </table>
-      </div>
-    </div>
-
-
-    <!-- ADMIN: Asset ID Creation -->
-
-    <!-- ADMIN: Asset Management — ID Creation + Allocation in one tab -->
-    <div class="page-wrap" id="page-asset-mgmt">
-      <div class="ph">
-        <h2>Asset Management</h2>
-        <div style="font-size:12px;color:var(--tx3);margin-top:2px;">Create asset IDs and allocate assets to employees — all in one place</div>
-      </div>
-
-      <!-- ── TOP ROW: Two inner cards side by side ── -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
-
-        <!-- LEFT: Asset ID Creation -->
-        <div class="card" style="overflow:visible;">
-          <div class="card-head">
-            <h3><i class="ti ti-tag" style="margin-right:6px;color:var(--teal);"></i>Asset ID Creation</h3>
-            <button class="btn btn-primary btn-sm" onclick="openAssetIdModal()"><i class="ti ti-plus"></i> Generate ID</button>
-          </div>
-          <div class="card-body" style="padding:14px 16px;">
-            <!-- Stats strip -->
-            <div id="assetid-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;"></div>
-            <!-- Filter & search -->
-            <div class="fbar" style="margin-bottom:10px;gap:5px;">
-              <button class="fb on" style="font-size:11px;padding:4px 10px;" onclick="sfAssetId(this,'all')">All</button>
-              <button class="fb"    style="font-size:11px;padding:4px 10px;" onclick="sfAssetId(this,'unassigned')">Unassigned</button>
-              <button class="fb"    style="font-size:11px;padding:4px 10px;" onclick="sfAssetId(this,'assigned')">Assigned</button>
-              <button class="fb"    style="font-size:11px;padding:4px 10px;" onclick="sfAssetId(this,'retired')">Retired</button>
-              <div class="sw" style="margin-left:auto;">
-                <i class="ti ti-search"></i>
-                <input type="text" placeholder="Search..." oninput="filterAssetIds(this.value)" style="width:130px;">
-              </div>
-            </div>
-            <!-- Table -->
-            <div style="overflow-x:auto;max-height:420px;overflow-y:auto;">
-              <table style="min-width:580px;">
-                <thead><tr>
-                  <th>Asset ID</th><th>Category</th><th>Generated</th><th>By</th><th>Status</th><th>Notes</th><th>Actions</th>
-                </tr></thead>
-                <tbody id="assetid-body"></tbody>
-              </table>
-            </div>
-            <div style="margin-top:10px;text-align:right;">
-              <button class="btn btn-sm btn-green" onclick="exportCSV('asset-ids')"><i class="ti ti-download"></i> Export IDs</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- RIGHT: Asset Allocation -->
-        <div class="card" style="overflow:visible;">
-          <div class="card-head">
-            <h3><i class="ti ti-transfer" style="margin-right:6px;color:var(--teal);"></i>Asset Allocation to Employee</h3>
-            <button class="btn btn-primary btn-sm" onclick="openAllocModal(null)"><i class="ti ti-transfer"></i> Allocate</button>
-          </div>
-          <div class="card-body" style="padding:14px 16px;">
-            <!-- Stats strip -->
-            <div id="alloc-stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;"></div>
-            <!-- Filter & search -->
-            <div class="fbar" style="margin-bottom:10px;gap:5px;">
-              <button class="fb on" style="font-size:11px;padding:4px 10px;" onclick="sfAlloc(this,'all')">All</button>
-              <button class="fb"    style="font-size:11px;padding:4px 10px;" onclick="sfAlloc(this,'allocate')">Allocated</button>
-              <button class="fb"    style="font-size:11px;padding:4px 10px;" onclick="sfAlloc(this,'deallocate')">Deallocated</button>
-              <button class="fb"    style="font-size:11px;padding:4px 10px;" onclick="sfAlloc(this,'transfer')">Transferred</button>
-              <div class="sw" style="margin-left:auto;">
-                <i class="ti ti-search"></i>
-                <input type="text" placeholder="Search..." oninput="filterAllocs(this.value)" style="width:130px;">
-              </div>
-            </div>
-            <!-- Table -->
-            <div style="overflow-x:auto;max-height:420px;overflow-y:auto;">
-              <table style="min-width:700px;">
-                <thead><tr>
-                  <th>Asset ID</th><th>Model</th><th>Type</th>
-                  <th>Allocated to</th><th>Emp No.</th><th>Dept</th>
-                  <th>Alloc. date</th><th>Action</th><th>By</th>
-                </tr></thead>
-                <tbody id="alloc-page-body"></tbody>
-              </table>
-            </div>
-            <div style="margin-top:10px;text-align:right;">
-              <button class="btn btn-sm btn-green" onclick="exportCSV('allocations')"><i class="ti ti-download"></i> Export</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- FULL WIDTH: All allocations history below -->
-      <div class="card">
-        <div class="card-head">
-          <h3><i class="ti ti-history" style="margin-right:6px;color:var(--teal);"></i>Full allocation history</h3>
-          <button class="btn btn-sm btn-green" onclick="exportCSV('allocations')"><i class="ti ti-download"></i> Export CSV</button>
-        </div>
-        <div style="overflow-x:auto;">
-          <table style="min-width:1100px;">
-            <thead><tr>
-              <th>#</th><th>Asset ID</th><th>Model</th><th>Type</th>
-              <th>Allocated to</th><th>Emp No.</th><th>Department</th><th>Location</th>
-              <th>Alloc. date</th><th>Dealloc. date</th><th>Allocated by</th><th>Action</th><th>Notes</th>
-            </tr></thead>
-            <tbody id="alloc-full-body"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
     <!-- TECH: Asset Assign -->
     <div class="page-wrap" id="page-asset-assign">
       <div class="ph">
@@ -1260,6 +1140,21 @@ tbody tr.rc:hover td { background: #EEF4FF; }
               <th>Asset Tag</th><th>Model</th><th>Category</th><th>Serial No.</th><th>Location</th><th>Action</th>
             </tr></thead>
             <tbody id="avail-assets-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Currently allocated assets — ready to return -->
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-head">
+          <h3><i class="ti ti-arrow-back-up" style="margin-right:6px;color:var(--red);"></i>Currently allocated (ready to deallocate)</h3>
+          <span id="inuse-count" class="badge b-med">0 allocated</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr>
+              <th>Asset Tag</th><th>Model</th><th>Category</th><th>Assigned to</th><th>Location</th><th>Action</th>
+            </tr></thead>
+            <tbody id="inuse-assets-body"></tbody>
           </table>
         </div>
       </div>
@@ -1704,29 +1599,43 @@ tbody tr.rc:hover td { background: #EEF4FF; }
       </div>
 
       <!-- Section 2: Allocate to -->
-      <div class="sec-title">Allocate to</div>
+      <div class="sec-title" id="al-allocto-title">Allocate to</div>
+      <div id="al-dealloc-note" style="display:none;background:var(--red-dim,rgba(220,38,38,.08));border:1.5px solid rgba(220,38,38,.25);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--tx2);">
+        <i class="ti ti-arrow-back-up" style="color:var(--red);margin-right:5px;"></i>
+        This will return the asset from <strong id="al-dealloc-from">—</strong> and mark it <strong>Available</strong> again.
+      </div>
       <div class="fgrid">
-        <div class="fg">
-          <label>Employee *</label>
-          <select id="al-user" onchange="onAllocUserSelect(this.value)">
-            <option value="">— Select employee —</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label>Employee No.</label>
-          <input type="text" id="al-empno" class="ro" readonly placeholder="Auto-filled">
-        </div>
-        <div class="fg">
-          <label>Username</label>
-          <input type="text" id="al-username" class="ro" readonly placeholder="Auto-filled">
-        </div>
-        <div class="fg">
-          <label>Department</label>
-          <input type="text" id="al-dept" class="ro" readonly placeholder="Auto-filled">
-        </div>
-        <div class="fg">
-          <label>Manager</label>
-          <input type="text" id="al-manager" placeholder="e.g. Priya S.">
+        <div id="al-emp-fields" style="display:contents;">
+          <div class="fg full" style="display:flex;align-items:center;gap:8px;">
+            <input type="checkbox" id="al-new-joiner" onchange="toggleNewJoiner(this.checked)" style="width:15px;height:15px;">
+            <label style="font-size:11px;font-weight:600;color:var(--tx2);text-transform:none;letter-spacing:0;">New joiner not yet in portal? Enter their details manually</label>
+          </div>
+          <div class="fg" id="al-user-select-wrap">
+            <label>Employee *</label>
+            <select id="al-user" onchange="onAllocUserSelect(this.value)">
+              <option value="">— Select employee —</option>
+            </select>
+          </div>
+          <div class="fg" id="al-user-manual-wrap" style="display:none;">
+            <label>New joiner name *</label>
+            <input type="text" id="al-manual-name" placeholder="e.g. Karthik R.">
+          </div>
+          <div class="fg">
+            <label>Employee No.</label>
+            <input type="text" id="al-empno" placeholder="Auto-filled or enter manually">
+          </div>
+          <div class="fg">
+            <label>Username</label>
+            <input type="text" id="al-username" class="ro" readonly placeholder="Auto-filled">
+          </div>
+          <div class="fg">
+            <label>Department</label>
+            <input type="text" id="al-dept" placeholder="Auto-filled or enter manually">
+          </div>
+          <div class="fg">
+            <label>Manager</label>
+            <input type="text" id="al-manager" placeholder="e.g. Priya S.">
+          </div>
         </div>
         <div class="fg">
           <label>Location</label>
@@ -1734,7 +1643,7 @@ tbody tr.rc:hover td { background: #EEF4FF; }
             <option value="">— Select location —</option>
           </select>
         </div>
-        <div class="fg">
+        <div class="fg" id="al-allocdate-wrap">
           <label>Allocated date *</label>
           <input type="date" id="al-allocdate">
         </div>
@@ -1749,7 +1658,7 @@ tbody tr.rc:hover td { background: #EEF4FF; }
       <div class="fgrid">
         <div class="fg">
           <label>Allocation type *</label>
-          <select id="al-action">
+          <select id="al-action" onchange="onAllocActionChange()">
             <option value="allocate">Allocate — assign to employee</option>
             <option value="deallocate">Deallocate — return asset</option>
             <option value="transfer">Transfer — move to another employee</option>
@@ -1828,24 +1737,25 @@ tbody tr.rc:hover td { background: #EEF4FF; }
 <div class="overlay" id="modal-asset">
   <div class="modal" style="max-width:780px;">
     <div class="modal-head">
-      <h3 id="am-title">Add asset</h3>
+      <h3 id="am-title">Register New Asset</h3>
       <button class="btn btn-sm btn-ghost" onclick="cm('modal-asset')"><i class="ti ti-x"></i></button>
     </div>
     <div class="modal-body">
 
+      <!-- ── ASSET ID — auto-generated, always visible first ── -->
+      <div class="fgrid" style="margin-bottom:16px;">
+        <div class="fg full">
+          <label>Asset ID (auto-generated)</label>
+          <div id="am-assetid-display" style="font-family:var(--mono);font-size:15px;font-weight:700;letter-spacing:.05em;padding:10px 14px;border-radius:var(--r);border:1.5px solid var(--border);background:var(--surface2);color:var(--tx3);">Select a category below to generate ID</div>
+        </div>
+      </div>
+
       <!-- ── SECTION 1: Asset Identification ── -->
       <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.09em;padding-bottom:8px;border-bottom:2px solid var(--border);margin-bottom:14px;">Asset identification</div>
       <div class="fgrid" style="margin-bottom:16px;">
-        <div class="fg"><label>Company</label><input type="text" id="am-company" placeholder="e.g. ACME Technologies"></div>
-        <div class="fg"><label>Asset tag *</label><input type="text" id="am-tag" placeholder="e.g. AST-0150"></div>
-        <div class="fg"><label>Model (master list)</label>
-          <select id="am-model-select" onchange="onAssetModelSelect(this.value)">
-            <option value="">— Select model —</option>
-          </select>
-        </div>
-        <div class="fg"><label>Model No.</label><input type="text" id="am-modelno" placeholder="e.g. 20DS0001IN"></div>
         <div class="fg"><label>Category / Type *</label>
-          <select id="am-type">
+          <select id="am-type" onchange="updateAssetIdPreview()">
+            <option value="">— Select category —</option>
             <optgroup label="Computing">
               <option>Laptop</option><option>Desktop</option><option>Mobile</option>
               <option>Server</option><option>Tablet</option>
@@ -1863,9 +1773,14 @@ tbody tr.rc:hover td { background: #EEF4FF; }
             <optgroup label="Other"><option>Other</option></optgroup>
           </select>
         </div>
+        <div class="fg"><label>Company</label><input type="text" id="am-company" placeholder="e.g. ACME Technologies"></div>
+        <div class="fg"><label>Model *</label>
+          <input type="text" id="am-model-select" list="am-model-datalist" placeholder="Type to search model..." oninput="onAssetModelSelect(this.value)" autocomplete="off">
+          <datalist id="am-model-datalist"></datalist>
+        </div>
         <div class="fg"><label>Manufacturer</label><input type="text" id="am-manufacturer" placeholder="e.g. Dell, HP, Lenovo"></div>
         <div class="fg"><label>Serial number</label><input type="text" id="am-serial" placeholder="e.g. SN123456789"></div>
-        <div class="fg"><label>Order number</label><input type="text" id="am-orderno" placeholder="e.g. PO-2024-0042"></div>
+        <div class="fg"><label>PO Number</label><input type="text" id="am-orderno" placeholder="e.g. PO-2024-0042"></div>
         <div class="fg"><label>Supplier</label><input type="text" id="am-supplier" placeholder="e.g. Ingram Micro India"></div>
         <div class="fg"><label>MAC address</label><input type="text" id="am-mac" placeholder="e.g. AA:BB:CC:DD:EE:FF"></div>
       </div>
@@ -1894,19 +1809,7 @@ tbody tr.rc:hover td { background: #EEF4FF; }
         <div class="fg"><label>Country</label><input type="text" id="am-country" placeholder="e.g. India"></div>
       </div>
 
-      <!-- ── SECTION 4: Allocation ── -->
-      <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.09em;padding-bottom:8px;border-bottom:2px solid var(--border);margin-bottom:14px;">Allocation details</div>
-      <div class="fgrid" style="margin-bottom:16px;">
-        <div class="fg"><label>Assigned to (name)</label><input type="text" id="am-assign" placeholder="Person or location"></div>
-        <div class="fg"><label>Employee No.</label><input type="text" id="am-empid" placeholder="e.g. EMP-0041"></div>
-        <div class="fg"><label>Username</label><input type="text" id="am-username" placeholder="e.g. ravi.kumar"></div>
-        <div class="fg"><label>Manager</label><input type="text" id="am-manager" placeholder="e.g. Priya S."></div>
-        <div class="fg"><label>Department</label><input type="text" id="am-dept" placeholder="e.g. Finance"></div>
-        <div class="fg"><label>Allocated date</label><input type="date" id="am-allocdate"></div>
-        <div class="fg"><label>Deallocated date</label><input type="date" id="am-deallocdate"></div>
-      </div>
-
-      <!-- ── SECTION 5: Status & Financial ── -->
+      <!-- ── SECTION 4: Status & Financial ── -->
       <div style="font-size:10px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.09em;padding-bottom:8px;border-bottom:2px solid var(--border);margin-bottom:14px;">Status, warranty &amp; value</div>
       <div class="fgrid" style="margin-bottom:16px;">
         <div class="fg"><label>Status *</label>
@@ -1929,7 +1832,7 @@ tbody tr.rc:hover td { background: #EEF4FF; }
     </div>
     <div class="modal-foot">
       <button class="btn btn-ghost" onclick="cm('modal-asset')">Cancel</button>
-      <button class="btn btn-primary" id="am-save" onclick="saveAsset()"><i class="ti ti-check"></i> Save asset</button>
+      <button class="btn btn-primary" id="am-save" onclick="saveAsset()"><i class="ti ti-check"></i> Register Asset</button>
     </div>
   </div>
 </div>
@@ -2060,7 +1963,7 @@ async function loadAllData(){
   nextUserId = USERS.length ? Math.max(...USERS.map(x=>x.id))+1 : 1;
   nextEmpNum = USERS.length ? Math.max(...USERS.map(x=>parseInt((x.empId||'EMP-0000').split('-')[1]||0)))+1 : 1;
 
-  ASSETS = a.map(x=>({id:x.id,tag:x.tag,name:x.name,type:x.type,assignedTo:x.assigned_to,assignedEmpId:x.assigned_emp_id,status:x.status,serial:x.serial,updated:x.updated}));
+  ASSETS = a.map(x=>({id:x.id,assetId:x.asset_id||'',tag:x.tag,name:x.name,type:x.type,company:x.company||'',model:x.model||'',modelNo:x.model_no||'',manufacturer:x.manufacturer||'',orderNo:x.order_no||'',supplier:x.supplier||'',mac:x.mac||'',processor:x.processor||'',procSpeed:x.proc_speed||'',ram:x.ram||'',ramType:x.ram_type||'',hdd:x.hdd||'',charger:x.charger||'',location:x.location||'',city:x.city||'',state:x.state||'',country:x.country||'',assignedTo:x.assigned_to,assignedEmpId:x.assigned_emp_id,username:x.username||'',manager:x.manager||'',dept:x.dept||'',allocDate:x.alloc_date||'',deallocDate:x.dealloc_date||'',status:x.status,warranty:x.warranty||'',warrantyExp:x.warranty_exp||'',value:x.value||'',nextAudit:x.next_audit||'',lastAudit:x.last_audit||'',serial:x.serial,updated:x.updated}));
   nextAssetId = ASSETS.length ? Math.max(...ASSETS.map(x=>x.id))+1 : 1;
 
   TICKETS = t.map(x=>({
@@ -2085,13 +1988,42 @@ async function dbUpdateUser(u){
   const {error}=await dbc.from('users').update({name:u.name,username:u.username,password:u.password,role:u.role,dept:u.dept,active:u.active,email:u.email}).eq('id',u.id);
   if(error)console.error('dbUpdateUser',error);
 }
+// ══ ASSET ID AUTO-GENERATION (tied to real inventory, not a separate tool) ════
+const REG_CAT_PREFIX = {
+  'Laptop':'L','Desktop':'D','Mobile':'M','Tablet':'T','Server':'S','Monitor':'MO',
+  'Printer':'P','Network Device':'N','Wifi Device':'W','Television Set':'TV',
+  'Mouse':'MS','Keyboard':'KB','Headphone':'HP','USB Headphone':'UH','Network':'N','Other':'O'
+};
+function regCatPrefix(cat){ return REG_CAT_PREFIX[cat] || (cat?cat.charAt(0).toUpperCase():'A'); }
+function nextAssetIdForCategory(cat){
+  const prefix = regCatPrefix(cat);
+  const nums = ASSETS.filter(a=>a.assetId && a.assetId.startsWith(prefix+'-'))
+    .map(a=>parseInt(a.assetId.split('-')[1]||'0')).filter(n=>!isNaN(n));
+  const next = nums.length ? Math.max(...nums)+1 : 1;
+  return `${prefix}-${String(next).padStart(4,'0')}`;
+}
+function updateAssetIdPreview(){
+  const cat=document.getElementById('am-type').value;
+  const disp=document.getElementById('am-assetid-display');
+  if(!disp)return;
+  if(editAssetId){
+    const a=ASSETS.find(x=>x.id===editAssetId);
+    disp.textContent = (a&&a.assetId) ? a.assetId : '— (legacy asset, no ID) —';
+    disp.style.color='var(--tx2)';disp.style.background='var(--surface2)';disp.style.borderColor='var(--border)';
+    return;
+  }
+  if(!cat){disp.textContent='Select a category above to generate ID';disp.style.color='var(--tx3)';disp.style.background='var(--surface2)';disp.style.borderColor='var(--border)';return;}
+  disp.textContent = nextAssetIdForCategory(cat);
+  disp.style.color='var(--teal)';disp.style.background='var(--teal-dim)';disp.style.borderColor='rgba(11,165,164,.3)';
+}
+
 async function dbInsertAsset(a){
-  const {data,error}=await dbc.from('assets').insert([{tag:a.tag,name:a.name,type:a.type,assigned_to:a.assignedTo,assigned_emp_id:a.assignedEmpId,status:a.status,serial:a.serial,updated:a.updated}]).select();
+  const {data,error}=await dbc.from('assets').insert([{asset_id:a.assetId||'',tag:a.tag,name:a.name,type:a.type,company:a.company||'',model:a.model||'',model_no:a.modelNo||'',manufacturer:a.manufacturer||'',order_no:a.orderNo||'',supplier:a.supplier||'',mac:a.mac||'',processor:a.processor||'',proc_speed:a.procSpeed||'',ram:a.ram||'',ram_type:a.ramType||'',hdd:a.hdd||'',charger:a.charger||'',location:a.location||'',city:a.city||'',state:a.state||'',country:a.country||'',assigned_to:a.assignedTo,assigned_emp_id:a.assignedEmpId,username:a.username||'',manager:a.manager||'',dept:a.dept||'',alloc_date:a.allocDate||'',dealloc_date:a.deallocDate||'',status:a.status,warranty:a.warranty||'',warranty_exp:a.warrantyExp||'',value:a.value||'',next_audit:a.nextAudit||'',last_audit:a.lastAudit||'',serial:a.serial,updated:a.updated}]).select();
   if(error){console.error('dbInsertAsset',error);return null;}
   return data && data[0] ? data[0].id : null;
 }
 async function dbUpdateAsset(a){
-  const {error}=await dbc.from('assets').update({tag:a.tag,name:a.name,type:a.type,assigned_to:a.assignedTo,assigned_emp_id:a.assignedEmpId,status:a.status,serial:a.serial,updated:a.updated}).eq('id',a.id);
+  const {error}=await dbc.from('assets').update({asset_id:a.assetId||'',tag:a.tag,name:a.name,type:a.type,company:a.company||'',model:a.model||'',model_no:a.modelNo||'',manufacturer:a.manufacturer||'',order_no:a.orderNo||'',supplier:a.supplier||'',mac:a.mac||'',processor:a.processor||'',proc_speed:a.procSpeed||'',ram:a.ram||'',ram_type:a.ramType||'',hdd:a.hdd||'',charger:a.charger||'',location:a.location||'',city:a.city||'',state:a.state||'',country:a.country||'',assigned_to:a.assignedTo,assigned_emp_id:a.assignedEmpId,username:a.username||'',manager:a.manager||'',dept:a.dept||'',alloc_date:a.allocDate||'',dealloc_date:a.deallocDate||'',status:a.status,warranty:a.warranty||'',warranty_exp:a.warrantyExp||'',value:a.value||'',next_audit:a.nextAudit||'',last_audit:a.lastAudit||'',serial:a.serial,updated:a.updated}).eq('id',a.id);
   if(error)console.error('dbUpdateAsset',error);
 }
 async function dbInsertTicket(t){
@@ -2369,7 +2301,6 @@ const TABS={
     {id:'all-tickets',       icon:'ti-ticket',           label:'All Tickets',       badge:'allOpen'},
     {id:'sla',               icon:'ti-clock',            label:'SLA Monitor'},
     {id:'approvals',         icon:'ti-checks',           label:'Approvals',         badge:'appr'},
-    /* ─── Asset Management ─── */
     /* ─── Reports & Resources ─── */
     {id:'analytics',         icon:'ti-chart-bar',        label:'Analytics'},
     {id:'location',          icon:'ti-map-pin',          label:'Locations'},
@@ -2387,7 +2318,7 @@ function renderSidebar(){
     ${CU.location?`<div class="sb-user-meta" style="margin-top:1px"><i class="ti ti-map-pin" style="font-size:9px;margin-right:3px;"></i>${CU.location}</div>`:''}
     <span class="sb-role ${roleColor[CU.role]}">${roleLbl[CU.role]}</span>`;
   const tabs=TABS[CU.role]||TABS.user;
-  const sections={user:[{label:'Menu',from:0}],tech:[{label:'Operations',from:0},{label:'Asset',from:4}],admin:[{label:'Operations',from:0},{label:'Asset Management',from:5},{label:'Reports & Resources',from:9}]};
+  const sections={user:[{label:'Menu',from:0}],tech:[{label:'Operations',from:0},{label:'Asset',from:4}],admin:[{label:'Operations',from:0},{label:'Reports & Resources',from:5}]};
   document.getElementById('sb-nav').innerHTML=tabs.map((t,i)=>{
     const b=t.badge?bc(t.badge):0;
     return`<button class="sb-item" id="si-${t.id}" onclick="showPage('${t.id}')"><i class="ti ${t.icon}"></i>${t.label}${b>0?`<span class="sb-badge">${b}</span>`:''}</button>`;
@@ -2435,14 +2366,12 @@ function showPage(id){
   if(id==='my-assigned')renderMyAssigned();
   if(id==='dashboard')renderDashboard();
   if(id==='approvals')renderApprovals();
-  if(id==='assets'){renderAssets();renderAllocHistory();}
   if(id==='kb-user')renderKB('kb-u');
   if(id==='kb-admin')renderKB('kb-a');
   if(id==='access')renderAccess();
   if(id==='location')renderLocations();
   if(id==='models')renderModels();
   if(id==='asset-id-creation')renderAssetIds();
-  if(id==='asset-mgmt'){renderAssetIds();renderAllocPage();renderAllocFull();}
   if(id==='asset-allocation')renderAllocPage();
   if(id==='asset-assign')renderAssetAssign();
   if(id==='manage-locations')renderManageLocations();
@@ -2690,10 +2619,8 @@ function renderAssets(){
   // Show/hide role-specific buttons on the asset page header
   const isAdmin = CU && CU.role === 'admin';
   const isTech  = CU && CU.role === 'tech';
-  const allocBtn = document.getElementById('asset-alloc-btn');
   const addBtn   = document.getElementById('asset-add-btn');
   const techBtn  = document.getElementById('tech-assign-btn');
-  if(allocBtn) allocBtn.style.display = isAdmin ? 'inline-flex' : 'none';
   if(addBtn)   addBtn.style.display   = isAdmin ? 'inline-flex' : 'none';
   if(techBtn)  techBtn.style.display  = isTech  ? 'inline-flex' : 'none';
   const sLbl={inuse:'In use',available:'Available',repair:'In repair',retired:'Retired',stolen:'Stolen/Lost',disposed:'Disposed'};
@@ -2742,30 +2669,31 @@ function renderAssets(){
     ${cell(a.hdd)}
     <td onclick="event.stopPropagation()" style="white-space:nowrap;display:flex;gap:5px;padding:8px 10px;">
       <button class="btn btn-sm btn-amber" onclick="openAssetModal(${a.id})"><i class="ti ti-edit"></i> Edit</button>
-      <button class="btn btn-sm" style="border-color:var(--teal);color:var(--teal);background:var(--teal-dim);" onclick="openAllocModal(${a.id})"><i class="ti ti-transfer"></i> Allocate</button>
+      ${a.status==='available'
+        ? `<button class="btn btn-sm" style="border-color:var(--teal);color:var(--teal);background:var(--teal-dim);" onclick="openAllocModal(${a.id})"><i class="ti ti-transfer"></i> Allocate</button>`
+        : a.status==='inuse'
+        ? `<button class="btn btn-sm btn-red" onclick="openAllocModal(${a.id})"><i class="ti ti-arrow-back-up"></i> Deallocate</button>`
+        : ''}
     </td>
   </tr>`).join(''):`<tr><td colspan="25"><div class="empty"><i class="ti ti-device-laptop"></i><p>No assets match this filter.</p></div></td></tr>`;
 }
 function openAssetModal(id){
   editAssetId=id;
-  document.getElementById('am-title').textContent=id?'Edit asset — '+(ASSETS.find(x=>x.id===id)||{}).tag:'Add asset';
-  document.getElementById('am-save').innerHTML=`<i class="ti ti-check"></i> ${id?'Save changes':'Add asset'}`;
-  const allFields=['am-tag','am-company','am-modelno','am-manufacturer','am-serial','am-orderno','am-supplier','am-mac',
+  document.getElementById('am-title').textContent=id?'Edit asset — '+(ASSETS.find(x=>x.id===id)||{}).assetId:'Register New Asset';
+  document.getElementById('am-save').innerHTML=`<i class="ti ti-check"></i> ${id?'Save changes':'Register Asset'}`;
+  const allFields=['am-company','am-manufacturer','am-serial','am-orderno','am-supplier','am-mac',
     'am-processor','am-procspeed','am-ram','am-ramtype','am-hdd','am-charger',
-    'am-city','am-state','am-country','am-assign','am-empid','am-username','am-manager','am-dept',
-    'am-allocdate','am-deallocdate','am-warranty','am-warrantyexp','am-value','am-nextaudit','am-lastaudit'];
+    'am-city','am-state','am-country',
+    'am-warranty','am-warrantyexp','am-value','am-nextaudit','am-lastaudit'];
   if(id){
     const a=ASSETS.find(x=>x.id===id);
     // Text/number fields
     const fieldMap={
-      'am-tag':a.tag,'am-company':a.company,'am-modelno':a.modelNo,'am-manufacturer':a.manufacturer,
+      'am-company':a.company,'am-manufacturer':a.manufacturer,
       'am-serial':a.serial,'am-orderno':a.orderNo,'am-supplier':a.supplier,'am-mac':a.mac,
       'am-processor':a.processor,'am-procspeed':a.procSpeed,'am-ram':a.ram,'am-ramtype':a.ramType,
       'am-hdd':a.hdd,'am-charger':a.charger,
       'am-city':a.city,'am-state':a.state,'am-country':a.country,
-      'am-assign':a.assignedTo,'am-empid':a.assignedEmpId,'am-username':a.username,
-      'am-manager':a.manager,'am-dept':a.dept,
-      'am-allocdate':a.allocDate,'am-deallocdate':a.deallocDate,
       'am-warranty':a.warranty,'am-warrantyexp':a.warrantyExp,'am-value':a.value,
       'am-nextaudit':a.nextAudit,'am-lastaudit':a.lastAudit
     };
@@ -2778,12 +2706,13 @@ function openAssetModal(id){
     if(document.getElementById('am-location'))document.getElementById('am-location').value=a.location||'';
   }else{
     allFields.forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
-    document.getElementById('am-type').value='Laptop';
-    document.getElementById('am-status').value='inuse';
+    document.getElementById('am-type').value='';
+    document.getElementById('am-status').value='available';
     if(document.getElementById('am-model-select'))document.getElementById('am-model-select').value='';
     populateAssetLocationDropdown();
   }
   populateAssetModelDropdown();
+  updateAssetIdPreview();
   document.getElementById('modal-asset').classList.add('open');
 }
 function populateAssetLocationDropdown(){
@@ -2795,20 +2724,25 @@ function populateAssetLocationDropdown(){
     ).join('');
 }
 async function saveAsset(){
-  const tag=document.getElementById('am-tag').value.trim();
+  const category=document.getElementById('am-type').value;
   const modelSel=document.getElementById('am-model-select');
-  const selectedModel=modelSel?modelSel.value:'';
-  // Asset name = model name if model selected, else tag
-  const nameFromModel=selectedModel||tag||'Asset';
-  if(!tag){alert('Asset tag is required.');return;}
+  const selectedModel=modelSel?modelSel.value.trim():'';
+  if(!category){alert('Please select a category — the Asset ID is generated from it.');return;}
+  if(!selectedModel){alert('Please search and select a model.');return;}
   const g=id=>document.getElementById(id)?document.getElementById(id).value.trim():'';
+  // Asset ID: generated once at registration, never regenerated on edit
+  const assetIdVal = editAssetId
+    ? ((ASSETS.find(a=>a.id===editAssetId)||{}).assetId || nextAssetIdForCategory(category))
+    : nextAssetIdForCategory(category);
+  // Asset Tag is derived automatically from the Asset ID — no manual entry needed
+  const tag = editAssetId ? ((ASSETS.find(a=>a.id===editAssetId)||{}).tag || assetIdVal) : assetIdVal;
   const data={
+    assetId:assetIdVal,
     tag:tag,
-    name:nameFromModel,
+    name:selectedModel,
     company:g('am-company'),
     model:selectedModel,
-    modelNo:g('am-modelno'),
-    type:document.getElementById('am-type').value,
+    type:category,
     manufacturer:g('am-manufacturer'),
     serial:g('am-serial'),
     orderNo:g('am-orderno'),
@@ -2824,13 +2758,6 @@ async function saveAsset(){
     city:g('am-city'),
     state:g('am-state'),
     country:g('am-country'),
-    assignedTo:g('am-assign')||'—',
-    assignedEmpId:g('am-empid'),
-    username:g('am-username'),
-    manager:g('am-manager'),
-    dept:g('am-dept'),
-    allocDate:g('am-allocdate'),
-    deallocDate:g('am-deallocdate'),
     status:document.getElementById('am-status').value,
     warranty:g('am-warranty'),
     warrantyExp:g('am-warrantyexp'),
@@ -2839,18 +2766,30 @@ async function saveAsset(){
     lastAudit:g('am-lastaudit'),
     updated:nows(),
   };
+  // Assignment fields are managed exclusively via the Asset Allocation tab —
+  // preserve whatever is already on the asset (or default to unassigned for new assets)
+  const existing = editAssetId ? ASSETS.find(a=>a.id===editAssetId) : null;
+  data.assignedTo    = existing ? existing.assignedTo    : '—';
+  data.assignedEmpId = existing ? existing.assignedEmpId : '';
+  data.username      = existing ? existing.username      : '';
+  data.manager       = existing ? existing.manager       : '';
+  data.dept          = existing ? existing.dept          : '';
+  data.allocDate     = existing ? existing.allocDate     : '';
+  data.deallocDate   = existing ? existing.deallocDate   : '';
   if(editAssetId){
     Object.assign(ASSETS.find(a=>a.id===editAssetId),data);
     await dbUpdateAsset(ASSETS.find(a=>a.id===editAssetId));
-    toast('Asset updated.');
+    toast(`Asset ${assetIdVal} updated.`);
   }else{
     const newAsset={id:nextAssetId++,...data};
     ASSETS.push(newAsset);
     const dbId=await dbInsertAsset(newAsset);
     if(dbId)newAsset.id=dbId;
-    toast('Asset added.');
+    toast(`Asset registered — ID ${assetIdVal} created.`);
   }
   cm('modal-asset');renderAssets();
+  if(document.getElementById('avail-alloc-list'))renderAvailForAlloc();
+  if(document.getElementById('avail-assets-body'))renderAssetAssign();
 }
 
 // ── KB ────────────────────────────────────────────────────────────────────────
@@ -3281,7 +3220,7 @@ function exportCSV(type){
   let rows,fn;
   if(type==='tickets'){rows=[['ID','Subject','Type','Category','Asset ID','Asset Name','Requester','Emp ID','Assignee','Priority','Status','SLA','Created'],...TICKETS.map(t=>[t.id,t.subject,t.ticketType||'incident',t.category,t.assetTag,t.assetName,t.requester,t.requesterEmpId||'',t.assignee,t.priority,t.status,t.sla,t.created])];fn='tickets.csv';}
   else if(type==='allocations'){rows=[['#','Asset Tag','Model','Type','Action','Assigned To','Emp No.','Department','Location','Alloc Date','Dealloc Date','Alloc By','Notes'],...ALLOCATIONS.map(h=>[h.id,h.assetTag,h.model||'',h.type||'',h.action,h.assignedTo||'',h.empNo||'',h.dept||'',h.location||'',h.allocDate||'',h.deallocDate||'',h.allocBy||'',h.notes||''])];fn='allocations.csv';}
-  else if(type==='assets'){rows=[['Asset Tag','Model','Category','Serial','Order No','Supplier','Company','Manufacturer','MAC','Processor','Proc Speed','RAM','RAM Type','HDD','Charger','Location','City','State','Country','Assigned To','Emp ID','Username','Manager','Dept','Alloc Date','Dealloc Date','Status','Warranty','Warranty Exp','Value','Next Audit','Last Audit','Last Updated'],...ASSETS.map(a=>[a.tag,a.model||'',a.type,a.serial||'',a.orderNo||'',a.supplier||'',a.company||'',a.manufacturer||'',a.mac||'',a.processor||'',a.procSpeed||'',a.ram||'',a.ramType||'',a.hdd||'',a.charger||'',a.location||'',a.city||'',a.state||'',a.country||'',a.assignedTo||'',a.assignedEmpId||'',a.username||'',a.manager||'',a.dept||'',a.allocDate||'',a.deallocDate||'',a.status,a.warranty||'',a.warrantyExp||'',a.value||'',a.nextAudit||'',a.lastAudit||'',a.updated])];fn='assets_full.csv';}
+  else if(type==='assets'){rows=[['Asset Tag','Model','Category','Serial','PO Number','Supplier','Company','Manufacturer','MAC','Processor','Proc Speed','RAM','RAM Type','HDD','Charger','Location','City','State','Country','Assigned To','Emp ID','Username','Manager','Dept','Alloc Date','Dealloc Date','Status','Warranty','Warranty Exp','Value','Next Audit','Last Audit','Last Updated'],...ASSETS.map(a=>[a.tag,a.model||'',a.type,a.serial||'',a.orderNo||'',a.supplier||'',a.company||'',a.manufacturer||'',a.mac||'',a.processor||'',a.procSpeed||'',a.ram||'',a.ramType||'',a.hdd||'',a.charger||'',a.location||'',a.city||'',a.state||'',a.country||'',a.assignedTo||'',a.assignedEmpId||'',a.username||'',a.manager||'',a.dept||'',a.allocDate||'',a.deallocDate||'',a.status,a.warranty||'',a.warrantyExp||'',a.value||'',a.nextAudit||'',a.lastAudit||'',a.updated])];fn='assets_full.csv';}
   else if(type==='approvals'){rows=[['ID','Title','Type','Urgency','Description'],...APPROVALS.map(a=>[a.id,a.title,a.type,a.urgency,a.desc])];fn='approvals.csv';}
   else if(type==='loc-report'){
     const locMap2={};
@@ -3833,37 +3772,24 @@ function deleteModel(id) {
 }
 
 function populateAssetModelDropdown() {
-  const sel = document.getElementById('am-model-select');
-  if (!sel) return;
-  const cur = sel.value;
-  const typeFilter = document.getElementById('am-type') ? document.getElementById('am-type').value : 'all';
-  // Group by type
-  const groups = {};
-  ASSET_MODELS.filter(m => m.status === 'active').forEach(m => {
-    if (!groups[m.type]) groups[m.type] = [];
-    groups[m.type].push(m);
-  });
-  let optHtml = '<option value="">— Select model —</option>';
-  Object.entries(groups).forEach(([type, models]) => {
-    optHtml += `<optgroup label="${type}">`;
-    models.forEach(m => {
-      optHtml += `<option value="${m.name}" ${m.name === cur ? 'selected' : ''}>${m.name}</option>`;
-    });
-    optHtml += '</optgroup>';
-  });
-  sel.innerHTML = optHtml;
+  const dl = document.getElementById('am-model-datalist');
+  if (!dl) return;
+  dl.innerHTML = ASSET_MODELS.filter(m => m.status === 'active')
+    .map(m => `<option value="${m.name}" label="${m.type}"></option>`).join('');
 }
 
 function onAssetModelSelect(val) {
   if (!val) return;
-  const m = ASSET_MODELS.find(x => x.name === val);
+  const m = ASSET_MODELS.find(x => x.name.toLowerCase() === val.trim().toLowerCase());
   if (!m) return;
-  // Auto-set the asset type to match the model
+  // Auto-set the asset category to match the model
   const typeEl = document.getElementById('am-type');
-  if (typeEl) typeEl.value = m.type;
-  // Auto-fill the name field if empty
-  const nameEl = document.getElementById('am-name');
-  if (nameEl && !nameEl.value.trim()) nameEl.value = m.name;
+  if (typeEl) { typeEl.value = m.type; updateAssetIdPreview(); }
+  // Auto-fill manufacturer if empty and known
+  if (m.brand) {
+    const brandEl = document.getElementById('am-manufacturer');
+    if (brandEl && !brandEl.value.trim()) brandEl.value = m.brand;
+  }
 }
 
 // ══ ASSET ALLOCATION ═════════════════════════════════════════════════════════
@@ -3871,15 +3797,56 @@ let ALLOCATIONS = []; // allocation history log
 let nextAllocId = 1;
 let editAllocId = null;
 
+function openDeallocModal(presetAssetId) {
+  openAllocModal(null); // sets up dropdowns, location, etc. in default (allocate) mode first
+  document.getElementById('al-action').value = 'deallocate';
+  onAllocActionChange();
+  if (presetAssetId) {
+    document.getElementById('al-asset').value = presetAssetId;
+    onAllocAssetSelect(presetAssetId);
+  }
+  document.getElementById('alloc-modal-title').textContent = 'Deallocate / Return Asset';
+}
+
+function populateAllocAssetDropdown(action, presetAssetId) {
+  const assetSel = document.getElementById('al-asset');
+  const isReturn = (action === 'deallocate' || action === 'repair' || action === 'dispose');
+  const pool = isReturn ? ASSETS.filter(a => a.status === 'inuse') : ASSETS.filter(a => a.status === 'available');
+  assetSel.innerHTML = pool.length
+    ? '<option value="">'+(isReturn?'— Select an allocated asset to return —':'— Select an available asset —')+'</option>' +
+      pool.map(a => `<option value="${a.id}">${a.assetId||a.id} · ${a.tag} — ${a.model||a.name||''}${isReturn?' — with '+(a.assignedTo||'Unassigned'):''}</option>`).join('')
+    : `<option value="">${isReturn ? 'No assets are currently allocated' : 'No available assets — register one in Asset Inventory first'}</option>`;
+  if (presetAssetId) assetSel.value = presetAssetId;
+}
+
+function onAllocActionChange() {
+  const action = document.getElementById('al-action').value;
+  const isReturn = (action === 'deallocate' || action === 'repair' || action === 'dispose');
+  // Swap the asset pool to match the action
+  populateAllocAssetDropdown(action, null);
+  ['al-model','al-type','al-serial','al-cur-status','al-cur-assign'].forEach(f => {
+    const el=document.getElementById(f); if(el) el.value='';
+  });
+  // Show/hide the employee-assignment fields — not needed when returning/repairing/disposing
+  document.getElementById('al-emp-fields').style.display = isReturn ? 'none' : 'contents';
+  document.getElementById('al-allocto-title').textContent = isReturn ? 'Return details' : 'Allocate to';
+  document.getElementById('al-dealloc-note').style.display = isReturn && action==='deallocate' ? 'block' : 'none';
+  document.getElementById('al-allocdate-wrap').style.display = isReturn ? 'none' : 'flex';
+  if (isReturn) {
+    document.getElementById('al-deallocdate').value = new Date().toISOString().split('T')[0];
+  }
+}
+
 function openAllocModal(presetAssetId) {
   editAllocId = null;
-  document.getElementById('alloc-modal-title').textContent = 'Asset allocation';
-  // Populate asset dropdown — all assets
-  const assetSel = document.getElementById('al-asset');
-  assetSel.innerHTML = '<option value="">— Select asset —</option>' +
-    ASSETS.map(a => `<option value="${a.id}">${a.tag} — ${a.model||a.name||''} (${a.type})</option>`).join('');
+  const presetAsset = presetAssetId ? ASSETS.find(a => String(a.id)===String(presetAssetId)) : null;
+  // If the preset asset is already allocated, open straight into "return" mode; otherwise "allocate" mode
+  const initialAction = (presetAsset && presetAsset.status === 'inuse') ? 'deallocate' : 'allocate';
+  document.getElementById('alloc-modal-title').textContent = initialAction === 'deallocate' ? 'Deallocate / Return Asset' : 'Allocate Asset to Employee';
+  document.getElementById('al-action').value = initialAction;
+
+  populateAllocAssetDropdown(initialAction, presetAssetId);
   if (presetAssetId) {
-    assetSel.value = presetAssetId;
     onAllocAssetSelect(presetAssetId);
   } else {
     ['al-model','al-type','al-serial','al-cur-status','al-cur-assign'].forEach(f => {
@@ -3895,6 +3862,8 @@ function openAllocModal(presetAssetId) {
   ['al-empno','al-username','al-dept','al-manager'].forEach(f => {
     const el=document.getElementById(f); if(el) el.value='';
   });
+  document.getElementById('al-new-joiner').checked = false;
+  toggleNewJoiner(false);
   // Populate location dropdown
   const locSel = document.getElementById('al-location');
   locSel.innerHTML = '<option value="">— Select location —</option>' +
@@ -3906,8 +3875,10 @@ function openAllocModal(presetAssetId) {
   document.getElementById('al-deallocdate').value = '';
   document.getElementById('al-notes').value = '';
   document.getElementById('al-by').value = CU ? CU.name : '';
-  document.getElementById('al-action').value = 'allocate';
   document.getElementById('al-preview').style.display = 'none';
+  // Apply the show/hide state for the chosen initial action
+  onAllocActionChange();
+  if (presetAssetId) populateAllocAssetDropdown(initialAction, presetAssetId);
   document.getElementById('modal-alloc').classList.add('open');
 }
 
@@ -3919,6 +3890,7 @@ function onAllocAssetSelect(val) {
   document.getElementById('al-serial').value     = a.serial || '';
   document.getElementById('al-cur-status').value = a.status || '';
   document.getElementById('al-cur-assign').value = a.assignedTo || 'Unassigned';
+  document.getElementById('al-dealloc-from').textContent = a.assignedTo || 'Unassigned';
   // Auto-set location if asset has one
   if (a.location) {
     const locSel = document.getElementById('al-location');
@@ -3978,22 +3950,41 @@ function previewAlloc() {
   document.getElementById('al-preview').style.display = 'block';
 }
 
+function toggleNewJoiner(isManual) {
+  document.getElementById('al-user-select-wrap').style.display = isManual ? 'none' : 'flex';
+  document.getElementById('al-user-manual-wrap').style.display = isManual ? 'flex' : 'none';
+  if (isManual) {
+    document.getElementById('al-user').value = '';
+    document.getElementById('al-username').value = '';
+  } else {
+    document.getElementById('al-manual-name').value = '';
+  }
+}
 function saveAlloc() {
   const assetId  = document.getElementById('al-asset').value;
+  const isManual = document.getElementById('al-new-joiner').checked;
   const userId   = document.getElementById('al-user').value;
+  const manualName = document.getElementById('al-manual-name').value.trim();
   const action   = document.getElementById('al-action').value;
+  const isReturn = (action==='deallocate'||action==='repair'||action==='dispose');
   const allocDate= document.getElementById('al-allocdate').value;
-  if (!assetId) { alert('Please select an asset.'); return; }
-  if ((action==='allocate'||action==='transfer') && !userId) { alert('Please select an employee to allocate to.'); return; }
-  if (!allocDate) { alert('Please enter an allocated date.'); return; }
+  const deallocDate0 = document.getElementById('al-deallocdate').value;
+  if (!assetId) { alert(isReturn ? 'Please select an allocated asset to return.' : 'Please select an available asset.'); return; }
+  if ((action==='allocate'||action==='transfer')) {
+    if (isManual && !manualName) { alert('Please enter the new joiner\'s name.'); return; }
+    if (!isManual && !userId) { alert('Please select an employee, or check "New joiner" to enter details manually.'); return; }
+    if (!allocDate) { alert('Please enter an allocated date.'); return; }
+  }
+  if (isReturn && !deallocDate0) { alert('Please enter the deallocated / return date.'); return; }
 
   const a = ASSETS.find(x => String(x.id)===String(assetId));
-  const u = userId ? USERS.find(x => String(x.id)===String(userId)) : null;
+  const u = (!isManual && userId) ? USERS.find(x => String(x.id)===String(userId)) : null;
   const statusMap = { allocate:'inuse', deallocate:'available', transfer:'inuse', repair:'repair', dispose:'disposed' };
   const newStatus = statusMap[action] || 'inuse';
   const location  = document.getElementById('al-location').value;
   const notes     = document.getElementById('al-notes').value.trim();
   const deallocDate = document.getElementById('al-deallocdate').value;
+  const assigneeName = u ? u.name : (isManual ? manualName : (action==='deallocate' ? 'Unassigned' : a.assignedTo));
 
   // Log the allocation history BEFORE changing asset
   const histEntry = {
@@ -4004,14 +3995,14 @@ function saveAlloc() {
     type: a.type||'',
     action,
     prevAssignee: a.assignedTo||'Unassigned',
-    assignedTo: u ? u.name : (action==='deallocate'?'Unassigned':a.assignedTo),
-    empNo: u ? u.empId : '',
-    dept: u ? u.dept : '',
+    assignedTo: assigneeName,
+    empNo: u ? u.empId : document.getElementById('al-empno').value.trim(),
+    dept: u ? u.dept : document.getElementById('al-dept').value.trim(),
     location,
     allocDate,
     deallocDate,
     allocBy: CU ? CU.name : '',
-    notes,
+    notes: isManual ? (notes ? notes+' | New joiner (no portal account yet)' : 'New joiner (no portal account yet)') : notes,
     createdAt: nows(),
     statusAfter: newStatus,
   };
@@ -4024,6 +4015,12 @@ function saveAlloc() {
     a.username     = u.username;
     a.dept         = u.dept;
     a.manager      = document.getElementById('al-manager').value;
+  } else if (isManual && (action==='allocate'||action==='transfer')) {
+    a.assignedTo    = manualName;
+    a.assignedEmpId = document.getElementById('al-empno').value.trim();
+    a.username      = '';
+    a.dept          = document.getElementById('al-dept').value.trim();
+    a.manager       = document.getElementById('al-manager').value;
   } else if (action==='deallocate') {
     a.assignedTo    = '—';
     a.assignedEmpId = '';
@@ -4046,6 +4043,7 @@ function saveAlloc() {
   renderAllocHistory();
   if(document.getElementById('alloc-page-body'))renderAllocPage();
   if(document.getElementById('avail-assets-body'))renderAssetAssign();
+  if(document.getElementById('avail-alloc-list'))renderAvailForAlloc();
   refreshBadges();
   const actionLbl={allocate:'allocated',deallocate:'deallocated',transfer:'transferred',repair:'sent to repair',dispose:'disposed'}[action]||action;
   toast(`Asset ${a.tag} ${actionLbl} successfully.`);
@@ -4186,6 +4184,33 @@ function generateAssetIds() {
   toast(`${created} asset ID${created !== 1 ? 's' : ''} generated (${prefix}-XXXX format).`);
 }
 
+let availAllocSearch = '';
+function filterAvailForAlloc(q) { availAllocSearch = q.toLowerCase(); renderAvailForAlloc(); }
+function renderAvailForAlloc() {
+  let list = ASSETS.filter(a => a.status === 'available');
+  const badge = document.getElementById('avail-count-badge');
+  if (badge) badge.textContent = list.length;
+  if (availAllocSearch) {
+    list = list.filter(a => [a.assetId,a.tag,a.model,a.name,a.serial,a.type].some(v => (v||'').toLowerCase().includes(availAllocSearch)));
+  }
+  const wrap = document.getElementById('avail-alloc-list');
+  if (!wrap) return;
+  if (!list.length) {
+    wrap.innerHTML = `<div class="empty" style="padding:32px 12px;"><i class="ti ti-package" style="font-size:32px;"></i><p style="font-size:12px;">No assets available right now.<br>Register a new asset in <strong>Asset Inventory</strong> first.</p></div>`;
+    return;
+  }
+  const typeIcon = {Laptop:'ti-device-laptop',Desktop:'ti-device-desktop',Mobile:'ti-device-mobile',Server:'ti-server',Tablet:'ti-device-tablet',Mouse:'ti-mouse',Keyboard:'ti-keyboard',Headphone:'ti-headphones','USB Headphone':'ti-headphones',Monitor:'ti-device-tv','Wifi Device':'ti-wifi','Network Device':'ti-router','Television Set':'ti-device-tv-old'};
+  wrap.innerHTML = list.map(a => `
+    <div class="asset-row">
+      <div class="asset-row-ic"><i class="ti ${typeIcon[a.type]||'ti-box'}"></i></div>
+      <div style="flex:1;min-width:0;">
+        <div class="asset-row-id">${a.assetId||a.id}<span style="margin:0 5px;color:var(--b2)">·</span>${a.tag||'—'}</div>
+        <div class="asset-row-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.model||a.name||'—'}</div>
+        <div class="asset-row-meta">${a.type||'—'}${a.location?' · '+a.location:''}</div>
+      </div>
+      <button class="btn btn-sm btn-primary" onclick="openAllocModal('${a.id}')"><i class="ti ti-transfer"></i></button>
+    </div>`).join('');
+}
 function sfAssetId(btn, val) {
   assetIdFilter = val;
   btn.closest('.fbar').querySelectorAll('.fb').forEach(b => b.classList.remove('on'));
@@ -4255,11 +4280,24 @@ function renderAllocFull() {
   const tbody = document.getElementById('alloc-full-body');
   if (!tbody) return;
   const EMPTY = '—';
+  const actionLbl = {allocate:'Allocated',deallocate:'Deallocated',transfer:'Transferred',repair:'Repair',dispose:'Disposed'};
   const actionBadge = {
     allocate:'b-res', deallocate:'b-closed', transfer:'b-med', repair:'b-high', dispose:'b-crit'
   };
-  tbody.innerHTML = ALLOCATIONS.length ? ALLOCATIONS.map((h, i) => `<tr>
-    <td class="mono" style="color:var(--tx3);font-size:11px">${h.id}</td>
+  let list = [...ALLOCATIONS];
+  if (allocFilter !== 'all') list = list.filter(h => h.action === allocFilter);
+  if (allocSearch) list = list.filter(h =>
+    (h.assetTag||'').toLowerCase().includes(allocSearch) ||
+    (h.assetId||'').toLowerCase().includes(allocSearch) ||
+    (h.assignedTo||'').toLowerCase().includes(allocSearch) ||
+    (h.empNo||'').toLowerCase().includes(allocSearch) ||
+    (h.dept||'').toLowerCase().includes(allocSearch) ||
+    (h.model||'').toLowerCase().includes(allocSearch)
+  );
+  const ledgerBadge = document.getElementById('ledger-count-badge');
+  if (ledgerBadge) ledgerBadge.textContent = list.length;
+  tbody.innerHTML = list.length ? list.map((h, i) => `<tr>
+    <td class="mono" style="color:var(--tx3);font-size:11px">#${h.id}</td>
     <td><span class="atag">${h.assetTag||EMPTY}</span></td>
     <td style="font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.model||EMPTY}</td>
     <td><span class="badge b-med" style="font-size:10px">${h.type||EMPTY}</span></td>
@@ -4270,61 +4308,62 @@ function renderAllocFull() {
     <td class="mono" style="font-size:11px;color:var(--tx2)">${h.allocDate||EMPTY}</td>
     <td class="mono" style="font-size:11px;color:var(--tx2)">${h.deallocDate||EMPTY}</td>
     <td style="font-size:12px;color:var(--tx2)">${h.allocBy||EMPTY}</td>
-    <td><span class="badge ${actionBadge[h.action]||'b-closed'}" style="font-size:10px">${h.action||EMPTY}</span></td>
-    <td style="font-size:11px;color:var(--tx2);max-width:120px;overflow:hidden;text-overflow:ellipsis">${h.notes||EMPTY}</td>
+    <td><span class="badge ${actionBadge[h.action]||'b-closed'}" style="font-size:10px">${actionLbl[h.action]||h.action||EMPTY}</span></td>
+    <td style="font-size:11px;color:var(--tx2);max-width:120px;overflow:hidden;text-overflow:ellipsis" title="${h.notes||''}">${h.notes||EMPTY}</td>
   </tr>`).join('') :
-  `<tr><td colspan="13"><div class="empty" style="padding:24px"><i class="ti ti-history"></i><p>No allocation history yet. Click "Allocate" to assign assets.</p></div></td></tr>`;
+  `<tr><td colspan="13"><div class="empty" style="padding:24px"><i class="ti ti-history"></i><p>No records match this filter.</p></div></td></tr>`;
 }
 // ══ ASSET ALLOCATION PAGE ════════════════════════════════════════════════════
 let allocFilter = 'all';
 let allocSearch = '';
 function sfAlloc(btn, val) {
   allocFilter = val;
-  btn.closest('.fbar').querySelectorAll('.fb').forEach(b => b.classList.remove('on'));
+  btn.closest('div').querySelectorAll('.fb').forEach(b => b.classList.remove('on'));
   btn.classList.add('on');
-  renderAllocPage();
+  renderAllocFull();
 }
-function filterAllocs(q) { allocSearch = q.toLowerCase(); renderAllocPage(); }
+function filterAllocs(q) { allocSearch = q.toLowerCase(); renderAllocFull(); }
+
+function renderAllocKpiStats() {
+  const el = document.getElementById('alloc-kpi-stats');
+  if (!el) return;
+  const totalAssets = ASSETS.length;
+  const available   = ASSETS.filter(a => a.status === 'available').length;
+  const allocated   = ASSETS.filter(a => a.status === 'inuse').length;
+  const repair      = ASSETS.filter(a => a.status === 'repair').length;
+  const returned    = ALLOCATIONS.filter(h => h.action === 'deallocate').length;
+  el.innerHTML = `
+    <div class="stat" style="--accent-color:#0B63CE"><div class="lbl">Total Assets</div><div class="num">${totalAssets}</div></div>
+    <div class="stat" style="--accent-color:#0D7C53"><div class="lbl">Available Pool</div><div class="num">${available}</div></div>
+    <div class="stat" style="--accent-color:#00B4B4"><div class="lbl">Currently Allocated</div><div class="num">${allocated}</div></div>
+    <div class="stat" style="--accent-color:#D97706"><div class="lbl">In Repair</div><div class="num">${repair}</div></div>
+    <div class="stat" style="--accent-color:#7C3AED"><div class="lbl">Total Returns</div><div class="num">${returned}</div></div>`;
+}
 
 function renderAllocPage() {
-  const total = ALLOCATIONS.length;
-  const allocated = ALLOCATIONS.filter(h => h.action === 'allocate').length;
-  const transferred = ALLOCATIONS.filter(h => h.action === 'transfer').length;
-  const deallocated = ALLOCATIONS.filter(h => h.action === 'deallocate').length;
-  const allocStats = document.getElementById('alloc-stats');
-  if (allocStats) allocStats.innerHTML = `
-    <div class="stat" style="--accent-color:#0D7C53"><div class="lbl">Total allocations</div><div class="num" style="font-family:var(--mono)">${total}</div></div>
-    <div class="stat" style="--accent-color:#0B63CE"><div class="lbl">Allocated</div><div class="num" style="font-family:var(--mono)">${allocated}</div></div>
-    <div class="stat" style="--accent-color:#7C3AED"><div class="lbl">Transferred</div><div class="num" style="font-family:var(--mono)">${transferred}</div></div>
-    <div class="stat" style="--accent-color:#D97706"><div class="lbl">Deallocated</div><div class="num" style="font-family:var(--mono)">${deallocated}</div></div>`;
-  let list = [...ALLOCATIONS];
-  if (allocFilter !== 'all') list = list.filter(h => h.action === allocFilter);
-  if (allocSearch) list = list.filter(h =>
-    (h.assetTag||'').toLowerCase().includes(allocSearch) ||
-    (h.assignedTo||'').toLowerCase().includes(allocSearch) ||
-    (h.empNo||'').toLowerCase().includes(allocSearch) ||
-    (h.dept||'').toLowerCase().includes(allocSearch)
-  );
-  const actionLbl = {allocate:'Allocated',deallocate:'Deallocated',transfer:'Transferred',repair:'Repair',dispose:'Disposed'};
-  const actionBdg = {allocate:'b-res',deallocate:'b-med',transfer:'b-tech',repair:'b-high',dispose:'b-closed'};
-  const tbody = document.getElementById('alloc-page-body');
-  if (!tbody) return;
-  tbody.innerHTML = list.length ? list.map((h,i) => `<tr>
-    <td class="mono" style="color:var(--tx3);font-size:11px">${h.id}</td>
-    <td><span class="atag">${h.assetTag}</span></td>
-    <td style="font-size:12px;font-weight:500;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.model||'—'}</td>
-    <td><span class="badge b-med" style="font-size:10px">${h.type||'—'}</span></td>
-    <td style="font-size:12px;font-weight:500">${h.assignedTo||'—'}</td>
-    <td class="mono" style="font-size:11px;color:var(--tx2)">${h.empNo||'—'}</td>
-    <td style="font-size:12px;color:var(--tx2)">${h.dept||'—'}</td>
-    <td style="font-size:12px;color:var(--tx2)">${h.location||'—'}</td>
-    <td class="mono" style="font-size:11px;color:var(--tx2)">${h.allocDate||'—'}</td>
-    <td class="mono" style="font-size:11px;color:var(--tx2)">${h.deallocDate||'—'}</td>
-    <td style="font-size:12px;color:var(--tx2)">${h.allocBy||'—'}</td>
-    <td><span class="badge ${actionBdg[h.action]||'b-closed'}">${actionLbl[h.action]||h.action}</span></td>
-    <td style="font-size:11px;color:var(--tx2);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${h.notes||''}">${h.notes||'—'}</td>
-  </tr>`).join('') :
-  `<tr><td colspan="13"><div class="empty" style="padding:28px 16px"><i class="ti ti-history"></i><p>No allocation records yet.</p></div></td></tr>`;
+  renderAllocKpiStats();
+  const feed = document.getElementById('alloc-page-body');
+  if (!feed) return;
+  const actionCfg = {
+    allocate:   {verb:'allocated to',    dot:'#0D7C53', ring:'rgba(13,124,83,.18)'},
+    deallocate: {verb:'returned from',   dot:'#DC2626', ring:'rgba(220,38,38,.18)'},
+    transfer:   {verb:'transferred to',  dot:'#7C3AED', ring:'rgba(124,58,237,.18)'},
+    repair:     {verb:'sent to repair',  dot:'#D97706', ring:'rgba(217,119,6,.18)'},
+    dispose:    {verb:'disposed',        dot:'#64748B', ring:'rgba(100,116,139,.18)'},
+  };
+  const recent = [...ALLOCATIONS].slice(0, 10);
+  const cntEl = document.getElementById('recent-activity-count');
+  if (cntEl) cntEl.textContent = ALLOCATIONS.length;
+  feed.innerHTML = recent.length ? recent.map(h => {
+    const cfg = actionCfg[h.action] || actionCfg.allocate;
+    return `<div class="activity-row">
+      <div class="activity-dot" style="background:${cfg.dot};--dot-ring:${cfg.ring}"></div>
+      <div>
+        <div class="activity-txt"><strong>${h.assetTag||h.assetId}</strong> (${h.model||h.type||'asset'}) ${cfg.verb} <strong>${h.assignedTo||'Unassigned'}</strong></div>
+        <div class="activity-meta">${h.allocDate||h.deallocDate||'—'} · by ${h.allocBy||'—'}${h.dept?' · '+h.dept:''}</div>
+      </div>
+    </div>`;
+  }).join('') : `<div class="empty" style="padding:28px 16px"><i class="ti ti-activity"></i><p>No activity yet — allocate an asset to get started.</p></div>`;
 }
 
 // ══ ASSET ASSIGN (TECH) ════════════════════════════════════════════════════════
@@ -4351,6 +4390,21 @@ function renderAssetAssign() {
       <td><button class="btn btn-sm btn-primary" onclick="quickAssign(${a.id})"><i class="ti ti-user-check"></i> Assign</button></td>
     </tr>`).join('') :
     `<tr><td colspan="6"><div class="empty" style="padding:20px 16px"><i class="ti ti-device-laptop"></i><p>No available assets right now.</p></div></td></tr>`;
+  }
+  const inuseAssets = ASSETS.filter(a => a.status === 'inuse');
+  const inuseCount = document.getElementById('inuse-count');
+  if (inuseCount) inuseCount.textContent = `${inuseAssets.length} allocated`;
+  const inuseBody = document.getElementById('inuse-assets-body');
+  if (inuseBody) {
+    inuseBody.innerHTML = inuseAssets.length ? inuseAssets.map(a => `<tr>
+      <td><span class="atag">${a.tag}</span></td>
+      <td style="font-weight:500;font-size:12px">${a.model||a.name||'—'}</td>
+      <td><span class="badge b-med" style="font-size:10px">${a.type}</span></td>
+      <td style="font-size:12px;color:var(--tx2)">${a.assignedTo||'—'}</td>
+      <td style="font-size:12px;color:var(--tx2)">${a.location||'—'}</td>
+      <td><button class="btn btn-sm btn-red" onclick="openDeallocModal(${a.id})"><i class="ti ti-arrow-back-up"></i> Deallocate</button></td>
+    </tr>`).join('') :
+    `<tr><td colspan="6"><div class="empty" style="padding:20px 16px"><i class="ti ti-arrow-back-up"></i><p>No assets currently allocated.</p></div></td></tr>`;
   }
   const myBody = document.getElementById('my-alloc-body');
   if (myBody) {
